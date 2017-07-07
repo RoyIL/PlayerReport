@@ -1,6 +1,8 @@
 ﻿using LiteDB;
 using MySql.Data.MySqlClient;
 using Logger = Rocket.Core.Logging.Logger;
+using Rocket.API;
+using Rocket.Unturned.Chat;
 using Steamworks;
 using System;
 using System.IO;
@@ -9,7 +11,9 @@ namespace RG.PlayerReport
 {
     public class Database
     {
-        internal string TableName = PlayerReport.Instance.Configuration.Instance.DatabaseTableName;
+        private string tableName = PlayerReport.Instance.Configuration.Instance.DatabaseTableName;
+
+        internal string TableName { get => tableName; set => tableName = value; }
 
         public Database()
         {
@@ -61,42 +65,57 @@ namespace RG.PlayerReport
             }
         }
 
-        public enum OperationResult
+        public void LiteDBAddReport(IRocketPlayer caller, CSteamID ReportedID, CSteamID ReporterID, string ReportText)
         {
-
-            SUCCESS,
-            TRANSACTION_TO_SELF,
-            PLAYER_NOT_FOUND,
-            NON_POSITIVE_AMOUNT,
-            NOT_ENOUGH_MONEY
-
+            try
+            {
+                if (!Directory.Exists("Database"))
+                {
+                    Directory.CreateDirectory("Database");
+                }
+                using (var LiteDBFile = new LiteDatabase(Path.Combine("Database", PlayerReport.Instance.Configuration.Instance.DatabaseName + ".db")))
+                using (var Trans = LiteDBFile.BeginTrans())
+                {
+                    var ReportsCollection = LiteDBFile.GetCollection<AddReportDB>(TableName);
+                    var AddReportsDB = new AddReportDB
+                    {
+                        ReportedID = ReportedID,
+                        ReporterID = ReporterID,
+                        ReportDate = DateTime.UtcNow,
+                        ReportText = ReportText,
+                    };
+                    ReportsCollection.Insert(AddReportsDB);
+                    Trans.Commit();
+                }
+                UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_add_successful"));
+            }
+            catch (Exception ex)
+            {
+                Logger.LogException(ex);
+            }
         }
 
-        public void LiteDBAddReport(CSteamID ReportedID, CSteamID ReporterID, string ReportText)
+        public void LiteDBDelReport(IRocketPlayer caller, string ID)
         {
-            if(!Directory.Exists("Database"))
+            if (Directory.Exists("Database"))
             {
-                Directory.CreateDirectory("Database");
+                LiteDatabase LiteDBFile = new LiteDatabase(Path.Combine("Database", PlayerReport.Instance.Configuration.Instance.DatabaseName + ".db"));
+                LiteCollection<AddReportDB> ReportsCollection = LiteDBFile.GetCollection<AddReportDB>(TableName);
+                ReportsCollection.Delete(ID);
+                ReportsCollection.Exists(Query.EQ("_id", ID));
+                UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_del_successful"));
+                UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_report_not_found")); 
             }
-            LiteDatabase LiteDBFile = new LiteDatabase(Path.Combine("Database", PlayerReport.Instance.Configuration.Instance.DatabaseName + ".db"));
-            LiteTransaction Transaction = LiteDBFile.BeginTrans();
-            LiteCollection<AddReportDB> ReportsCollection = LiteDBFile.GetCollection<AddReportDB>(TableName);
-            var AddReportDB = new AddReportDB
+            else
             {
-                ReportedID = ReportedID,
-                ReporterID = ReporterID,
-                ReportDate = DateTime.UtcNow,
-                ReportText = ReportText,
-            };
-            ReportsCollection.Insert(AddReportDB);
-            Transaction.Commit();
+                UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_data_not_found"));
+            }
         }
 
         public class AddReportDB
         {
-
             [BsonId]
-            public int Id { get; set; }
+            public int ID { get; set; }
 
             [BsonIndex(false)]
             public CSteamID ReportedID { get; set; }
@@ -105,12 +124,11 @@ namespace RG.PlayerReport
             public CSteamID ReporterID { get; set; }
 
             public DateTime ReportDate { get; set; }
-
             public string ReportText { get; set; }
 
         }
 
-        public void MySqlAddReport(CSteamID ReportedID, CSteamID ReporterID, string ReportText)
+        public void MySqlAddReport(IRocketPlayer caller, CSteamID ReportedID, CSteamID ReporterID, string ReportText)
         {
             try
             {
@@ -121,18 +139,26 @@ namespace RG.PlayerReport
                 SQLcommand.Parameters.AddWithValue("@ReportInfo", ReportText);
                 SQLcommand.CommandText = "insert into `" + PlayerReport.Instance.Configuration.Instance.DatabaseTableName + "` (`ReportedID`,`ReporterID`,`ReportInfo`) values(@ReportedID,@ReporterID,@ReportInfo);";
                 SQLconnection.Open();
-                SQLcommand.ExecuteNonQuery();
+                int OK = SQLcommand.ExecuteNonQuery();
                 SQLconnection.Close();
+                if (OK > 0)
+                {
+                    UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_add_successful"));
+                }
+                else
+                {
+                    UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_erro_saving"));
+                }
             }
             catch (Exception ex)
             {
                 Logger.LogException(ex);
+                UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_erro_saving"));
             }
         }
 
-        public bool MySqlDelReport(string ID)
+        public void MySqlDelReport(IRocketPlayer caller, string ID)
         {
-            bool result;
             try
             {
                 MySqlConnection SQLconnection = CreateConnection();
@@ -150,20 +176,18 @@ namespace RG.PlayerReport
                 SQLconnection.Close();
                 if (OK > 0)
                 {
-                    result = true;
+                    UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_del_successful"));
                 }
                 else
                 {
-                    result = false;
+                    UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_report_not_found"));
                 }
             }
             catch (Exception ex)
             {
                 Logger.LogException(ex, null);
-                result = false;
+                UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_erro_saving"));
             }
-            return result;
         }
-
     }
 }

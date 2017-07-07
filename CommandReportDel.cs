@@ -1,7 +1,5 @@
 ﻿using Rocket.API;
 using Rocket.Unturned.Chat;
-using Rocket.Unturned.Player;
-using Steamworks;
 using System.Collections.Generic;
 
 namespace RG.PlayerReport
@@ -48,18 +46,16 @@ namespace RG.PlayerReport
         {
             if (command.Length != 1)
             {
-                UnturnedChat.Say(caller, "Try /delreport" + Syntax);
+                UnturnedChat.Say(caller, "Try /delreport " + Syntax);
                 return;
             }
             if (PlayerReport.Instance.Configuration.Instance.UseMYSQL)
             {
-                PlayerReport.Instance.Database.MySqlDelReport(command[0]);
-                UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_del_successful"));
+                PlayerReport.Instance.Database.MySqlDelReport(caller, command[0]);
             }
             else if (!PlayerReport.Instance.Configuration.Instance.UseMYSQL)
             {
-                PlayerReport.Instance.Database.LiteDBReport(command[0]);
-                UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_del_successful"));
+                PlayerReport.Instance.Database.LiteDBDelReport(caller, command[0]);
             }
         }
     }

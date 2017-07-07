@@ -53,7 +53,7 @@ namespace RG.PlayerReport
             }
             if (command.Length < 2)
             {
-                UnturnedChat.Say(caller, "Try /report" + Syntax);
+                UnturnedChat.Say(caller, "Try /report " + Syntax);
                 return;
             }
             UnturnedPlayer Reported = UnturnedPlayer.FromName(command[0]);
@@ -80,13 +80,11 @@ namespace RG.PlayerReport
             }
             if (PlayerReport.Instance.Configuration.Instance.UseMYSQL)
             {
-                PlayerReport.Instance.Database.MySqlAddReport(ReportedID, ReporterID, ReportText);
-                UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_successful"));
+                PlayerReport.Instance.Database.MySqlAddReport(caller, ReportedID, ReporterID, ReportText);
             }
             else if (!PlayerReport.Instance.Configuration.Instance.UseMYSQL)
             {
-                PlayerReport.Instance.Database.LiteDBAddReport(ReportedID, ReporterID, ReportText);
-                UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_successful"));
+                PlayerReport.Instance.Database.LiteDBAddReport(Reported, Reporter, ReportText);
             }
         }
     }
