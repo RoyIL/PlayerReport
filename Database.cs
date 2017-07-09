@@ -11,11 +11,9 @@ namespace RG.PlayerReport
 {
     public class Database
     {
-        private string tableName = PlayerReport.Instance.Configuration.Instance.DatabaseTableName;
+        private string TableName = PlayerReport.Instance.Configuration.Instance.DatabaseTableName;
 
-        internal string TableName { get => tableName; set => tableName = value; }
-
-        public Database()
+		public Database()
         {
 			if (PlayerReport.Instance.Configuration.Instance.UseMYSQL)
 			{
