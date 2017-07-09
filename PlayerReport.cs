@@ -19,15 +19,16 @@ namespace RG.PlayerReport
             {
                 return new TranslationList()
                 {
-                    { "command_player_not_found", "Player not found" },
-                    { "command_report_yourself", "You can not report yourself" },
-                    { "command_from_console", "You are the console, the console does not report people, it gives them ban" },
-                    { "command_add_successful", "You reported the player successfully" },
-                    { "command_del_successful", "You deleted the report successfully" },
+                    { "command_player_not_found", "Player not found." },
+                    { "command_report_yourself", "You can not report yourself." },
+                    { "command_from_console", "You are the console, the console does not report people, it gives them ban." },
+                    { "command_add_successful", "You reported the player successfully." },
+                    { "command_del_successful", "You deleted the report successfully." },
 					{ "command_data_not_found", "Database not found." },
                     { "command_erro_saving", "An error occurred with database." },
-                    { "command_report_not_found", "Report not found." }
-                };
+                    { "command_report_not_found", "Report not found." },
+					{ "command_report_maxchar", "The reason for the report has exceeded the character limit." }
+				};
             }
         }
 

@@ -29,7 +29,11 @@ namespace RG.PlayerReport
             MySqlConnection SQLconnection = null;
             try
             {
-                if (PlayerReport.Instance.Configuration.Instance.DatabasePort == 0) PlayerReport.Instance.Configuration.Instance.DatabasePort = 3306;
+				if (PlayerReport.Instance.Configuration.Instance.DatabasePort <= 0)
+				{
+					PlayerReport.Instance.Configuration.Instance.DatabasePort = 3306;
+					PlayerReport.Instance.Configuration.Save();
+				}
                 SQLconnection = new MySqlConnection(string.Format("SERVER={0};DATABASE={1};UID={2};PASSWORD={3};PORT={4};", new object[] {
                     PlayerReport.Instance.Configuration.Instance.DatabaseAddress,
                     PlayerReport.Instance.Configuration.Instance.DatabaseName,

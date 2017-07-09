@@ -3,6 +3,7 @@ using Rocket.Unturned.Chat;
 using Rocket.Unturned.Player;
 using Steamworks;
 using System.Collections.Generic;
+using System.Management.Instrumentation;
 
 namespace RG.PlayerReport
 {
@@ -78,14 +79,40 @@ namespace RG.PlayerReport
                 if (num == 1) continue;
                 ReportText = ReportText + " " + s;
             }
-            if (PlayerReport.Instance.Configuration.Instance.UseMYSQL)
-            {
-                PlayerReport.Instance.Database.MySqlAddReport(caller, ReportedID, ReporterID, ReportText);
-            }
-            else if (!PlayerReport.Instance.Configuration.Instance.UseMYSQL)
-            {
-                PlayerReport.Instance.Database.LiteDBAddReport(Reported, Reporter, ReportText);
-            }
+			if (PlayerReport.Instance.Configuration.Instance.LimCharacter <= 5)
+			{
+				PlayerReport.Instance.Configuration.Instance.DatabasePort = 50;
+			}
+			PlayerReport.Instance.Configuration.Save();
+			if (PlayerReport.Instance.Configuration.Instance.MaxCharacter)
+			{
+				if (ReportText.Length <= PlayerReport.Instance.Configuration.Instance.LimCharacter)
+				{
+					if (PlayerReport.Instance.Configuration.Instance.UseMYSQL)
+					{
+						PlayerReport.Instance.Database.MySqlAddReport(caller, ReportedID, ReporterID, ReportText);
+					}
+					else if (!PlayerReport.Instance.Configuration.Instance.UseMYSQL)
+					{
+						PlayerReport.Instance.Database.LiteDBAddReport(caller, ReportedID, ReporterID, ReportText);
+					}
+				}
+				else
+				{
+					UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_report_maxchar"));
+				}
+			}
+			else
+			{
+				if (PlayerReport.Instance.Configuration.Instance.UseMYSQL)
+				{
+					PlayerReport.Instance.Database.MySqlAddReport(caller, ReportedID, ReporterID, ReportText);
+				}
+				else if (!PlayerReport.Instance.Configuration.Instance.UseMYSQL)
+				{
+					PlayerReport.Instance.Database.LiteDBAddReport(caller, ReportedID, ReporterID, ReportText);
+				}
+			}
         }
     }
 }
