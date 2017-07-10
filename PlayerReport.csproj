@@ -47,20 +47,20 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="I18N">
-      <HintPath>lib\I18N.dll</HintPath>
+      <HintPath>Libraries\I18N.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="I18N.West">
-      <HintPath>lib\I18N.West.dll</HintPath>
+      <HintPath>Libraries\I18N.West.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="LiteDB, Version=3.0.1.0, Culture=neutral, PublicKeyToken=4ee40123013c9f27, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>lib\LiteDB.dll</HintPath>
+      <HintPath>Libraries\LiteDB.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="MySql.Data">
-      <HintPath>lib\MySql.Data.dll</HintPath>
+      <HintPath>Libraries\MySql.Data.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Rocket.API">
@@ -82,7 +82,7 @@
     <Reference Include="System.Transactions" />
     <Reference Include="System.XML" />
     <Reference Include="System.Xml.Linq, Version=3.5.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>lib\System.Xml.Linq.dll</HintPath>
+      <HintPath>Libraries\System.Xml.Linq.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine">
@@ -93,16 +93,16 @@
   <ItemGroup>
     <Content Include="lib\Assembly-CSharp-firstpass.dll" />
     <Content Include="lib\Assembly-CSharp.dll" />
-    <Content Include="lib\I18N.dll" />
-    <Content Include="lib\I18N.West.dll" />
-    <Content Include="lib\LiteDB.dll" />
-    <Content Include="lib\MySql.Data.dll" />
+    <Content Include="Libraries\I18N.dll" />
+    <Content Include="Libraries\I18N.West.dll" />
+    <Content Include="Libraries\LiteDB.dll" />
+    <Content Include="Libraries\MySql.Data.dll" />
     <Content Include="lib\Rocket.API.dll" />
     <Content Include="lib\Rocket.Core.dll" />
     <Content Include="lib\Rocket.Unturned.dll" />
-    <Content Include="lib\System.Data.dll" />
-    <Content Include="lib\System.Management.dll" />
-    <Content Include="lib\System.Transactions.dll" />
+    <Content Include="Libraries\System.Data.dll" />
+    <Content Include="Libraries\System.Management.dll" />
+    <Content Include="Libraries\System.Transactions.dll" />
     <Content Include="lib\UnityEngine.dll" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
