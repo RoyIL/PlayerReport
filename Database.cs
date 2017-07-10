@@ -42,6 +42,7 @@ namespace RG.PlayerReport
             catch (Exception ex)
             {
                 Logger.LogException(ex);
+				PlayerReport.Instance.MySQLON = false;
             }
             return SQLconnection;
         }
@@ -64,7 +65,8 @@ namespace RG.PlayerReport
             catch (Exception exception)
             {
                 Logger.LogException(exception);
-            }
+				PlayerReport.Instance.MySQLON = false;
+			}
         }
 
         public void LiteDBAddReport(IRocketPlayer caller, CSteamID ReportedID, CSteamID ReporterID, string ReportText)
@@ -103,10 +105,23 @@ namespace RG.PlayerReport
             {
                 LiteDatabase LiteDBFile = new LiteDatabase(Path.Combine("Database", PlayerReport.Instance.Configuration.Instance.DatabaseName + ".db"));
                 LiteCollection<AddReportDB> ReportsCollection = LiteDBFile.GetCollection<AddReportDB>(TableName);
-                ReportsCollection.Delete(ID);
-                ReportsCollection.Exists(Query.EQ("_id", ID));
-                UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_del_successful"));
-                UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_report_not_found")); 
+				if (ReportsCollection.Exists(Query.EQ("_id", ID)))
+				{
+					ReportsCollection.Delete(ID);
+					if (caller is ConsolePlayer)
+					{
+
+						Logger.Log(PlayerReport.Instance.Translate("command_del_successful"));
+					}
+					else
+					{
+						UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_del_successful"));
+					}
+				}
+				else
+				{
+					UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_report_not_found"));
+				}
             }
             else
             {
@@ -178,11 +193,25 @@ namespace RG.PlayerReport
                 SQLconnection.Close();
                 if (OK > 0)
                 {
-                    UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_del_successful"));
+					if (caller is ConsolePlayer)
+					{
+						Logger.Log(PlayerReport.Instance.Translate("command_del_successful"));
+					}
+					else
+					{
+						UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_del_successful"));
+					}
                 }
                 else
                 {
-                    UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_report_not_found"));
+					if (caller is ConsolePlayer)
+					{
+						Logger.Log(PlayerReport.Instance.Translate("command_report_not_found"));
+					}
+					else
+					{
+						UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_report_not_found"));
+					}
                 }
             }
             catch (Exception ex)

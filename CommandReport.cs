@@ -1,9 +1,9 @@
 ﻿using Rocket.API;
+using Rocket.Core.Logging;
 using Rocket.Unturned.Chat;
 using Rocket.Unturned.Player;
 using Steamworks;
 using System.Collections.Generic;
-using System.Management.Instrumentation;
 
 namespace RG.PlayerReport
 {
@@ -49,7 +49,7 @@ namespace RG.PlayerReport
         {
             if (caller is ConsolePlayer)
             {
-                UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_from_console"));
+				Logger.Log(PlayerReport.Instance.Translate("command_from_console"));
                 return;
             }
             if (command.Length < 2)
@@ -88,7 +88,7 @@ namespace RG.PlayerReport
 			{
 				if (ReportText.Length <= PlayerReport.Instance.Configuration.Instance.LimCharacter)
 				{
-					if (PlayerReport.Instance.Configuration.Instance.UseMYSQL)
+					if (PlayerReport.Instance.Configuration.Instance.UseMYSQL & PlayerReport.Instance.MySQLON)
 					{
 						PlayerReport.Instance.Database.MySqlAddReport(caller, ReportedID, ReporterID, ReportText);
 					}
@@ -104,7 +104,7 @@ namespace RG.PlayerReport
 			}
 			else
 			{
-				if (PlayerReport.Instance.Configuration.Instance.UseMYSQL)
+				if (PlayerReport.Instance.Configuration.Instance.UseMYSQL & PlayerReport.Instance.MySQLON)
 				{
 					PlayerReport.Instance.Database.MySqlAddReport(caller, ReportedID, ReporterID, ReportText);
 				}

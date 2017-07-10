@@ -1,4 +1,5 @@
 ﻿using Rocket.API;
+using Rocket.Core.Logging;
 using Rocket.Unturned.Chat;
 using System.Collections.Generic;
 
@@ -49,7 +50,7 @@ namespace RG.PlayerReport
                 UnturnedChat.Say(caller, "Try /delreport " + Syntax);
                 return;
             }
-            if (PlayerReport.Instance.Configuration.Instance.UseMYSQL)
+			if (PlayerReport.Instance.Configuration.Instance.UseMYSQL & PlayerReport.Instance.MySQLON)
             {
                 PlayerReport.Instance.Database.MySqlDelReport(caller, command[0]);
             }

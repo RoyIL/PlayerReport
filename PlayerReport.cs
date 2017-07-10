@@ -13,7 +13,9 @@ namespace RG.PlayerReport
 
         public Database Database;
 
-        public override TranslationList DefaultTranslations
+		public bool MySQLON = true;
+
+		public override TranslationList DefaultTranslations
         {
             get
             {
@@ -37,7 +39,7 @@ namespace RG.PlayerReport
             Instance = this;
             Database = new Database();
             U.Events.OnPlayerConnected += Events_OnPlayerConnected;
-			if (Instance.Configuration.Instance.UseMYSQL)
+			if (Instance.Configuration.Instance.UseMYSQL & MySQLON)
 			{
 				Logger.Log("Report Plugin has been loaded with MySQL!", ConsoleColor.DarkGreen);
 			}
