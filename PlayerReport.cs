@@ -39,7 +39,7 @@ namespace RG.PlayerReport
             Instance = this;
             Database = new Database();
             U.Events.OnPlayerConnected += Events_OnPlayerConnected;
-			if (Instance.Configuration.Instance.UseMYSQL & MySQLON)
+			if (Instance.Configuration.Instance.UseMYSQL & PlayerReport.Instance.MySQLON)
 			{
 				Logger.Log("Report Plugin has been loaded with MySQL!", ConsoleColor.DarkGreen);
 			}
@@ -49,7 +49,9 @@ namespace RG.PlayerReport
 			}
 			else
 			{
-                Instance.Configuration.Instance.UseMYSQL = false;
+                Instance.Configuration.Instance.UseMYSQL = true;
+				Instance.Configuration.Save();
+				Logger.Log("Report Plugin has been loaded without MySQL!", ConsoleColor.DarkGreen);
 			}
         }
 
