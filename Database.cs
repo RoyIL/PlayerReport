@@ -14,15 +14,12 @@ namespace RG.PlayerReport
         private string TableName = PlayerReport.Instance.Configuration.Instance.DatabaseTableName;
 
 		public Database()
-        {
-			if (PlayerReport.Instance.Configuration.Instance.UseMYSQL)
-			{
-				new I18N.West.CP1250();
-				CheckSchema();
-			}
-        }
+		{
+			new I18N.West.CP1250();
+			CheckSchema();
+		}
 
-        private MySqlConnection CreateConnection()
+		private MySqlConnection CreateConnection()
         {
             MySqlConnection SQLconnection = null;
             try
@@ -49,78 +46,76 @@ namespace RG.PlayerReport
 
         public void CheckSchema()
         {
-            try
-            {
-                MySqlConnection SQLconnection = CreateConnection();
-                MySqlCommand SQLcommand = SQLconnection.CreateCommand();
-                SQLcommand.CommandText = string.Concat("show tables like '" + PlayerReport.Instance.Configuration.Instance.DatabaseTableName + "'");
-                SQLconnection.Open();
-                if (SQLcommand.ExecuteScalar() == null)
-                {
-                    SQLcommand.CommandText = string.Concat("CREATE TABLE `" + PlayerReport.Instance.Configuration.Instance.DatabaseTableName + "` (`id` int(11) NOT NULL AUTO_INCREMENT,`ReportedID` varchar(32) NOT NULL,`ReporterID` varchar(32) NOT NULL,`ReportDate` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,`ReportInfo` varchar(512) DEFAULT NULL,PRIMARY KEY (`id`));");
-                    SQLcommand.ExecuteNonQuery();
-                }
-                SQLconnection.Close();
-            }
-            catch (Exception exception)
-            {
-                Logger.LogException(exception);
+			try
+			{
+				MySqlConnection SQLconnection = CreateConnection();
+				MySqlCommand SQLcommand = SQLconnection.CreateCommand();
+				SQLcommand.CommandText = string.Concat("show tables like '" + PlayerReport.Instance.Configuration.Instance.DatabaseTableName + "'");
+				SQLconnection.Open();
+				if (SQLcommand.ExecuteScalar() == null)
+				{
+					SQLcommand.CommandText = string.Concat("CREATE TABLE `" + PlayerReport.Instance.Configuration.Instance.DatabaseTableName + "` (`id` int(11) NOT NULL AUTO_INCREMENT,`ReportedID` varchar(32) NOT NULL,`ReporterID` varchar(32) NOT NULL,`ReportDate` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,`ReportInfo` varchar(512) DEFAULT NULL,`Notified` varchar(5) DEFAULT false,PRIMARY KEY (`id`)); ");
+					SQLcommand.ExecuteNonQuery();
+				}
+				SQLconnection.Close();
+			}
+			catch (Exception exception)
+			{
+				Logger.LogException(exception);
 				PlayerReport.Instance.MySQLON = false;
 			}
         }
 
-        public void LiteDBAddReport(IRocketPlayer caller, CSteamID ReportedID, CSteamID ReporterID, string ReportText)
+        public void LiteDBAddReport(IRocketPlayer caller, string ReportedID, string ReporterID, string ReportInfo)
         {
-            try
-            {
-                if (!Directory.Exists("Database"))
-                {
-                    Directory.CreateDirectory("Database");
-                }
-                using (var LiteDBFile = new LiteDatabase(Path.Combine("Database", PlayerReport.Instance.Configuration.Instance.DatabaseName + ".db")))
-                using (var Trans = LiteDBFile.BeginTrans())
-                {
-                    var ReportsCollection = LiteDBFile.GetCollection<AddReportDB>(TableName);
-                    var AddReportsDB = new AddReportDB
-                    {
-                        ReportedID = ReportedID,
-                        ReporterID = ReporterID,
-                        ReportDate = DateTime.UtcNow,
-                        ReportText = ReportText,
-                    };
-                    ReportsCollection.Insert(AddReportsDB);
-                    Trans.Commit();
-                }
-                UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_add_successful"));
+			if (!Directory.Exists("Database"))
+			{
+				Directory.CreateDirectory("Database");
             }
-            catch (Exception ex)
-            {
-                Logger.LogException(ex);
-            }
+			using (LiteDatabase LiteDBFile = new LiteDatabase(Path.Combine("Database", PlayerReport.Instance.Configuration.Instance.DatabaseName + ".db")))
+			using (LiteTransaction Trans = LiteDBFile.BeginTrans())
+			{
+				LiteCollection<AddReportDB> ReportsCollection = LiteDBFile.GetCollection<AddReportDB>(TableName);
+				var AddReportsDB = new AddReportDB
+				{
+					ReportedID = ReportedID,
+					ReporterID = ReporterID,
+					ReportDate = DateTime.UtcNow,
+					ReportInfo = ReportInfo,
+					Notified = false
+				};
+				ReportsCollection.Insert(AddReportsDB);
+				Trans.Commit();
+			}
+            UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_add_successful"));
         }
 
         public void LiteDBDelReport(IRocketPlayer caller, string ID)
         {
             if (Directory.Exists("Database"))
             {
-                LiteDatabase LiteDBFile = new LiteDatabase(Path.Combine("Database", PlayerReport.Instance.Configuration.Instance.DatabaseName + ".db"));
-                LiteCollection<AddReportDB> ReportsCollection = LiteDBFile.GetCollection<AddReportDB>(TableName);
-				if (ReportsCollection.Exists(Query.EQ("_id", ID)))
+				using (LiteDatabase LiteDBFile = new LiteDatabase(Path.Combine("Database", PlayerReport.Instance.Configuration.Instance.DatabaseName + ".db")))
+				using (LiteTransaction Trans = LiteDBFile.BeginTrans())
 				{
-					ReportsCollection.Delete(ID);
-					if (caller is ConsolePlayer)
+					LiteCollection<AddReportDB> ReportsCollection = LiteDBFile.GetCollection<AddReportDB>(TableName);
+					if (ReportsCollection.Exists(Query.EQ("_id", ID)))
 					{
+						ReportsCollection.Delete(ID);
+						if (caller is ConsolePlayer)
+						{
 
-						Logger.Log(PlayerReport.Instance.Translate("command_del_successful"));
+							Logger.Log(PlayerReport.Instance.Translate("command_del_successful"));
+						}
+						else
+						{
+							UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_del_successful"));
+						}
 					}
 					else
 					{
-						UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_del_successful"));
+						UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_report_not_found"));
 					}
-				}
-				else
-				{
-					UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_report_not_found"));
+					Trans.Commit();
 				}
             }
             else
@@ -129,32 +124,111 @@ namespace RG.PlayerReport
             }
         }
 
-        public class AddReportDB
+		//working
+
+		/* public void LiteDBNotif()
+		{
+			int CountVal = 0;
+			try
+			{
+				MySqlConnection SQLconnection = CreateConnection();
+				MySqlCommand SQLcommand = SQLconnection.CreateCommand();
+				SQLcommand.CommandText = "SELECT `Notified`, COUNT(*) AS `HowMany` FROM `Unturned`.`Reports` WHERE Notified = 'false' GROUP BY `Notified`;";
+				SQLconnection.Open();
+				object Ok = SQLcommand.ExecuteScalar();
+				if (Ok != null)
+				{
+					int.TryParse(Ok.ToString(), out CountVal);
+				}
+				SQLcommand.ExecuteNonQuery();
+				SQLconnection.Close();
+			}
+			catch (Exception ex)
+			{
+				Logger.LogException(ex);
+			}
+			if (CountVal > 0)
+			{
+				PlayerReport.Instance.NotifyExist = true;
+			}
+		}
+
+		public void LiteDBNotified()
+		{
+			if (Directory.Exists("Database"))
+			{
+				using (LiteDatabase LiteDBFile = new LiteDatabase(Path.Combine("Database", PlayerReport.Instance.Configuration.Instance.DatabaseName + ".db")))
+				using (LiteTransaction Trans = LiteDBFile.BeginTrans())
+				{
+					LiteCollection<AddReportDB> ReportsCollection = LiteDBFile.GetCollection<AddReportDB>(TableName);
+					if (ReportsCollection.Exists(Query.EQ("_id", ID)))
+					{
+						ReportsCollection.Delete(ID);
+						if (caller is ConsolePlayer)
+						{
+
+							Logger.Log(PlayerReport.Instance.Translate("command_del_successful"));
+						}
+						else
+						{
+							UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_del_successful"));
+						}
+					}
+					else
+					{
+						UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_report_not_found"));
+					}
+					Trans.Commit();
+				}
+			}
+			else
+			{
+				UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_data_not_found"));
+			}
+			try
+			{
+				MySqlConnection SQLconnection = CreateConnection();
+				MySqlCommand SQLcommand = SQLconnection.CreateCommand();
+				SQLcommand.CommandText = "update `Unturned`.`Reports` set Notified='true' where Notified='false';";
+				SQLconnection.Open();
+				SQLcommand.ExecuteNonQuery();
+				SQLconnection.Close();
+			}
+			catch (Exception ex)
+			{
+				Logger.LogException(ex);
+			}
+		} */
+
+		//working 
+
+		public class AddReportDB
         {
             [BsonId]
             public int ID { get; set; }
 
-            [BsonIndex(false)]
-            public CSteamID ReportedID { get; set; }
+			[BsonIndex(true)]
+			public string ReportedID { get; set; }
 
-            [BsonIndex(false)]
-            public CSteamID ReporterID { get; set; }
+			[BsonIndex(true)]
+			public string ReporterID { get; set; }
 
             public DateTime ReportDate { get; set; }
-            public string ReportText { get; set; }
+            public string ReportInfo { get; set; }
+			public bool Notified { get; set; }
 
-        }
+		}
 
-        public void MySqlAddReport(IRocketPlayer caller, CSteamID ReportedID, CSteamID ReporterID, string ReportText)
+        public void MySqlAddReport(IRocketPlayer caller, CSteamID MReportedID, CSteamID MReporterID, string ReportInfo)
         {
             try
             {
                 MySqlConnection SQLconnection = CreateConnection();
                 MySqlCommand SQLcommand = SQLconnection.CreateCommand();
-                SQLcommand.Parameters.AddWithValue("@ReportedID", ReportedID);
-				SQLcommand.Parameters.AddWithValue("@ReporterID", ReporterID);
-                SQLcommand.Parameters.AddWithValue("@ReportInfo", ReportText);
-                SQLcommand.CommandText = "insert into `" + PlayerReport.Instance.Configuration.Instance.DatabaseTableName + "` (`ReportedID`,`ReporterID`,`ReportInfo`) values(@ReportedID,@ReporterID,@ReportInfo);";
+                SQLcommand.Parameters.AddWithValue("@ReportedID", MReportedID);
+				SQLcommand.Parameters.AddWithValue("@ReporterID", MReporterID);
+				SQLcommand.Parameters.AddWithValue("@ReportInfo", ReportInfo);
+                SQLcommand.CommandText = "insert into `" + PlayerReport.Instance.Configuration.Instance.DatabaseTableName + "` (`ReportedID`,`ReporterID`,`ReportInfo`,`Notified`) values(@ReportedID,@ReporterID,@ReportInfo,false);";
                 SQLconnection.Open();
                 int OK = SQLcommand.ExecuteNonQuery();
                 SQLconnection.Close();
@@ -174,25 +248,25 @@ namespace RG.PlayerReport
             }
         }
 
-        public void MySqlDelReport(IRocketPlayer caller, string ID)
-        {
-            try
-            {
-                MySqlConnection SQLconnection = CreateConnection();
-                MySqlCommand SQLcommand = SQLconnection.CreateCommand();
-                SQLcommand.CommandText = string.Concat(new string[]
-                {
-                    "delete from `",
-                    PlayerReport.Instance.Configuration.Instance.DatabaseTableName,
-                    "` where id='",
-                    ID,
-                    "';"
-                });
-                SQLconnection.Open();
-                int OK = SQLcommand.ExecuteNonQuery();
-                SQLconnection.Close();
-                if (OK > 0)
-                {
+		public void MySqlDelReport(IRocketPlayer caller, string ID)
+		{
+			try
+			{
+				MySqlConnection SQLconnection = CreateConnection();
+				MySqlCommand SQLcommand = SQLconnection.CreateCommand();
+				SQLcommand.CommandText = string.Concat(new string[]
+				{
+					"delete from `",
+					PlayerReport.Instance.Configuration.Instance.DatabaseTableName,
+					"` where id='",
+					ID,
+					"';"
+				});
+				SQLconnection.Open();
+				int OK = SQLcommand.ExecuteNonQuery();
+				SQLconnection.Close();
+				if (OK > 0)
+				{
 					if (caller is ConsolePlayer)
 					{
 						Logger.Log(PlayerReport.Instance.Translate("command_del_successful"));
@@ -201,9 +275,9 @@ namespace RG.PlayerReport
 					{
 						UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_del_successful"));
 					}
-                }
-                else
-                {
+				}
+				else
+				{
 					if (caller is ConsolePlayer)
 					{
 						Logger.Log(PlayerReport.Instance.Translate("command_report_not_found"));
@@ -212,13 +286,58 @@ namespace RG.PlayerReport
 					{
 						UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_report_not_found"));
 					}
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.LogException(ex, null);
-                UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_erro_saving"));
-            }
-        }
+				}
+			}
+			catch (Exception ex)
+			{
+				Logger.LogException(ex, null);
+				UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_erro_saving"));
+			}
+		}
+
+		public void MySqlNotif()
+		{
+			int CountVal = 0;
+			try
+			{
+				MySqlConnection SQLconnection = CreateConnection();
+				MySqlCommand SQLcommand = SQLconnection.CreateCommand();
+				SQLcommand.CommandText = "SELECT `Notified`, COUNT(*) AS `HowMany` FROM `Unturned`.`Reports` WHERE Notified = 'false' GROUP BY `Notified`;";
+				SQLconnection.Open();
+				object Ok = SQLcommand.ExecuteScalar();
+				if (Ok != null)
+				{
+					int.TryParse(Ok.ToString(), out CountVal);
+				}
+				SQLcommand.ExecuteNonQuery();
+				SQLconnection.Close();
+			}
+			catch (Exception ex)
+			{
+				Logger.LogException(ex);
+			}
+			if (CountVal > 0)
+			{
+				PlayerReport.Instance.NotifyExist = true;
+			}
+		}
+
+		public void MySqlNotified()
+		{
+			try
+			{
+				MySqlConnection SQLconnection = CreateConnection();
+				MySqlCommand SQLcommand = SQLconnection.CreateCommand();
+				SQLcommand.CommandText = "update `Unturned`.`Reports` set Notified='true' where Notified='false';";
+				SQLconnection.Open();
+				SQLcommand.ExecuteNonQuery();
+				SQLconnection.Close();
+			}
+			catch (Exception ex)
+			{
+				Logger.LogException(ex);
+			}
+		}
     }
 }
+ 
