@@ -19,7 +19,7 @@ namespace RG.PlayerReport
 
         public string Syntax
         {
-            get { return "reports view/del/list/page <ReportID>"; }
+            get { return " view <id>, /reports del <id>, /reports list <page>"; }
         }
 
         public List<string> Aliases

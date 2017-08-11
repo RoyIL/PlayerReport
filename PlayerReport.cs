@@ -32,7 +32,7 @@ namespace RG.PlayerReport
 
 		public Database Database;
 
-		public List<IRocketPlayer> List;
+		public List<IRocketPlayer> List = new List<IRocketPlayer>();
 
 		public override TranslationList DefaultTranslations
         {
