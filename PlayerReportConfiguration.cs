@@ -2,7 +2,7 @@
 
 namespace RG.PlayerReport
 {
-    public class PlayerReportConfiguration : IRocketPluginConfiguration
+	public class PlayerReportConfiguration : IRocketPluginConfiguration
     {
         public string DatabaseAddress;
         public string DatabaseUsername;
@@ -11,7 +11,8 @@ namespace RG.PlayerReport
         public string DatabaseTableName;
         public int DatabasePort;
         public bool UseMYSQL;
-        public bool MaxCharacter;
+		public bool LogFile;
+		public bool MaxCharacter;
         public int LimCharacter;
 
         public void LoadDefaults()
@@ -23,7 +24,8 @@ namespace RG.PlayerReport
             DatabaseTableName = "Reports";
             DatabasePort = 3306;
             UseMYSQL = true;
-            MaxCharacter = true;
+			LogFile = false;
+			MaxCharacter = true;
             LimCharacter = 150;
         }
     }

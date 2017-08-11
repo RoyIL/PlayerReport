@@ -14,6 +14,7 @@ using Steamworks;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -26,22 +27,12 @@ namespace RG.PlayerReport
         public static PlayerReport Instance;
 
 		public bool MySQLON = true;
-
 		public bool NotifyExist = false;
+		public static string ReportLog = System.IO.Directory.GetCurrentDirectory() + @"/Reports.log";
 
 		public Database Database;
 
-		public List<IRocketPlayer> Players()
-		{
-			List<IRocketPlayer> List = new List<IRocketPlayer>();
-
-			foreach (SteamPlayer StPl in Provider.clients)
-			{
-				IRocketPlayer Play = UnturnedPlayer.FromSteamPlayer(StPl);
-				List.Add(Play);
-			}
-			return List;
-		}
+		public List<IRocketPlayer> List;
 
 		public override TranslationList DefaultTranslations
         {
@@ -69,25 +60,35 @@ namespace RG.PlayerReport
         {
             Instance = this;
             U.Events.OnPlayerConnected += Events_OnPlayerConnected;
+			U.Events.OnPlayerDisconnected += Events_OnPlayerDisconnected;
+			foreach (SteamPlayer StPl in Provider.clients)
+			{
+				IRocketPlayer Play = UnturnedPlayer.FromSteamPlayer(StPl);
+				List.Add(Play);
+			}
 			if (Instance.Configuration.Instance.UseMYSQL)
 			{
 				Logger.Log("Connecting the database ...", ConsoleColor.DarkGreen);
 				Database = new Database();
 				if (!Instance.MySQLON)
 				{
-					Logger.Log("to connect to the database, please check the settings!", ConsoleColor.DarkGreen);
+					Logger.Log("To connect to the database, please check the settings!", ConsoleColor.DarkGreen);
 					Logger.Log("Report Plugin has been loaded without MySQL!", ConsoleColor.DarkGreen);
+					File.AppendAllText(ReportLog, "[" + DateTime.Now + "] Report Plugin has been loaded without MySQL!" + System.Environment.NewLine);
 
 				}
 				else
 				{
 					Logger.Log("Successful connection!", ConsoleColor.DarkGreen);
 					Logger.Log("Report Plugin has been loaded with MySQL!", ConsoleColor.DarkGreen);
+					File.AppendAllText(ReportLog, "[" + DateTime.Now + "] Report Plugin has been loaded with MySQL!" + System.Environment.NewLine);
 				}
 			}
 			else if (!Instance.Configuration.Instance.UseMYSQL)
 			{
+				Instance.MySQLON = false;
 				Logger.Log("Report Plugin has been loaded without MySQL!", ConsoleColor.DarkGreen);
+				File.AppendAllText(ReportLog, "[" + DateTime.Now + "] Report Plugin has been loaded without MySQL!" + System.Environment.NewLine);
 			}
 			else
 			{
@@ -97,28 +98,38 @@ namespace RG.PlayerReport
 					Instance.Configuration.Instance.UseMYSQL = false;
 					Instance.Configuration.Save();
 					Logger.Log("Report Plugin has been loaded without MySQL!", ConsoleColor.DarkGreen);
+					File.AppendAllText(ReportLog, "[" + DateTime.Now + "] Report Plugin has been loaded without MySQL!" + System.Environment.NewLine);
 				}
 				else
 				{
 					Instance.Configuration.Instance.UseMYSQL = true;
 					Instance.Configuration.Save();
 					Logger.Log("Report Plugin has been loaded with MySQL!", ConsoleColor.DarkGreen);
+					File.AppendAllText(ReportLog, "[" + DateTime.Now + "] Report Plugin has been loaded with MySQL!" + System.Environment.NewLine);
 				}
 
 			}
-        }
+		}
 
         protected override void Unload()
         {
             Instance = null;
             U.Events.OnPlayerConnected -= Events_OnPlayerConnected;
+			U.Events.OnPlayerDisconnected -= Events_OnPlayerDisconnected;
 			Logger.Log("Report Plugin has been unloaded!", ConsoleColor.DarkGreen);
-        }
+			File.AppendAllText(ReportLog, "[" + DateTime.Now + "] Report Plugin has been unloaded!" + System.Environment.NewLine);
+		}
+
+		private void Events_OnPlayerDisconnected(IRocketPlayer DisconnectedPlayer)
+		{
+			List.Remove(DisconnectedPlayer);
+		}
 
 		private void Events_OnPlayerConnected(IRocketPlayer ConnectedPlayer)
 		{
 			UnturnedPlayer ConPlayer = (UnturnedPlayer)ConnectedPlayer;
 			Logger.LogWarning(ConnectedPlayer.DisplayName + " connected with IP " + ConPlayer.IP);
+			List.Add(ConnectedPlayer);
 			if (Instance.MySQLON)
 			{
 				Instance.Database.MySqlNotif();
@@ -135,7 +146,7 @@ namespace RG.PlayerReport
 
 		private void Events_OnPlayerUpdatePosition(IRocketPlayer MovPlayer, Vector3 NoCare)
 		{
-			if (MovPlayer.HasPermission("RocketReport.notify"))
+			if (MovPlayer.HasPermission("RocketReport.notify") || MovPlayer.IsAdmin)
 			{
 				UnturnedChat.Say(MovPlayer, Instance.Translate("new_reports_to_see"));
 				if (Instance.MySQLON)

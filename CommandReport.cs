@@ -94,7 +94,7 @@ namespace RG.PlayerReport
 					{
 						PlayerReport.Instance.Database.LiteDBAddReport(caller, Reported.Id, Reporter.Id, ReportText);
 					}
-					foreach (IRocketPlayer PlayPerm in PlayerReport.Instance.Players())
+					foreach (IRocketPlayer PlayPerm in PlayerReport.Instance.List)
 					{
 						if (PlayPerm.IsAdmin || PlayPerm.HasPermission("RocketReport.notify"))
 						{
@@ -128,7 +128,7 @@ namespace RG.PlayerReport
 				{
 					PlayerReport.Instance.Database.LiteDBAddReport(caller, Reported.Id, Reporter.Id, ReportText);
 				}
-				foreach (IRocketPlayer PlayPerm in PlayerReport.Instance.Players())
+				foreach (IRocketPlayer PlayPerm in PlayerReport.Instance.List)
 				{
 					if (PlayPerm.IsAdmin || PlayPerm.HasPermission("RocketReport.notify"))
 					{
