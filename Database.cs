@@ -67,31 +67,31 @@ namespace RG.PlayerReport
 			}
         }
 
-        public void LiteDBAddReport(IRocketPlayer caller, string ReportedID, string ReporterID, string ReportInfo)
-        {
+		public void LiteDBAddReport(IRocketPlayer caller, string ReportedID, string ReporterID, string ReportText)
+		{
 			if (!Directory.Exists("Database"))
 			{
 				Directory.CreateDirectory("Database");
-            }
+			}
 			using (LiteDatabase LiteDBFile = new LiteDatabase(Path.Combine("Database", PlayerReport.Instance.Configuration.Instance.DatabaseName + ".db")))
 			using (LiteTransaction Trans = LiteDBFile.BeginTrans())
 			{
-				LiteCollection<AddReportDB> ReportsCollection = LiteDBFile.GetCollection<AddReportDB>(TableName);
+				var ReportsCollection = LiteDBFile.GetCollection<AddReportDB>(TableName);
 				var AddReportsDB = new AddReportDB
 				{
 					ReportedID = ReportedID,
 					ReporterID = ReporterID,
 					ReportDate = DateTime.UtcNow,
-					ReportInfo = ReportInfo,
-					Notified = false
+					ReportInfo = ReportText,
+					Notified = 0
 				};
 				ReportsCollection.Insert(AddReportsDB);
 				Trans.Commit();
 			}
-            UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_add_successful"));
-        }
+			UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_add_successful"));
+		}
 
-        public void LiteDBDelReport(IRocketPlayer caller, string ID)
+		public void LiteDBDelReport(IRocketPlayer caller, string ID)
         {
             if (Directory.Exists("Database"))
             {
@@ -208,19 +208,15 @@ namespace RG.PlayerReport
             [BsonId]
             public int ID { get; set; }
 
-			[BsonIndex(true)]
 			public string ReportedID { get; set; }
-
-			[BsonIndex(true)]
 			public string ReporterID { get; set; }
-
             public DateTime ReportDate { get; set; }
             public string ReportInfo { get; set; }
-			public bool Notified { get; set; }
+			public int Notified { get; set; }
 
 		}
 
-        public void MySqlAddReport(IRocketPlayer caller, CSteamID MReportedID, CSteamID MReporterID, string ReportInfo)
+        public void MySqlAddReport(IRocketPlayer caller, CSteamID MReportedID, CSteamID MReporterID, string ReportText)
         {
             try
             {
@@ -228,7 +224,7 @@ namespace RG.PlayerReport
                 MySqlCommand SQLcommand = SQLconnection.CreateCommand();
                 SQLcommand.Parameters.AddWithValue("@ReportedID", MReportedID);
 				SQLcommand.Parameters.AddWithValue("@ReporterID", MReporterID);
-				SQLcommand.Parameters.AddWithValue("@ReportInfo", ReportInfo);
+				SQLcommand.Parameters.AddWithValue("@ReportInfo", ReportText);
 				SQLcommand.CommandText = string.Concat("insert into `" + TableName + "` (`ReportedID`,`ReporterID`,`ReportInfo`,`Notified`) values(@ReportedID,@ReporterID,@ReportInfo,false);");
                 SQLconnection.Open();
                 int OK = SQLcommand.ExecuteNonQuery();
