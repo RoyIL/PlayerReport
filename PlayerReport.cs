@@ -28,7 +28,9 @@ namespace RG.PlayerReport
 
 		public bool MySQLON = true;
 		public bool NotifyExist = false;
+		public bool DataFound = false;
 		public static string ReportLog = System.IO.Directory.GetCurrentDirectory() + @"/Reports.log";
+		private int Notif = 0;
 
 		public Database Database;
 
@@ -47,9 +49,9 @@ namespace RG.PlayerReport
                     { "command_erro_saving", "An error occurred with database." },
                     { "command_report_not_found", "Report not found." },
 					{ "command_report_maxchar", "The reason for the report has exceeded the character limit." },
-					{ "new_reports_to_see", "There are new reports for you to check." },
-					{ "command_del_nonum", "" },
-					{ "command_del_nofound", "" }
+					{ "new_reports_to_see", "There are new reports for you to review." },
+					{ "invalid_num", "Please enter a valid number."},
+					{ "command_report_or_steam_not_found", "The id of the report or steam id was not found."}
 				};
             }
         }
@@ -58,6 +60,11 @@ namespace RG.PlayerReport
         {
             Instance = this;
             U.Events.OnPlayerConnected += Events_OnPlayerConnected;
+			if (Instance.Configuration.Instance.Notifications <= 0)
+			{
+				Instance.Configuration.Instance.Notifications = 3;
+				Instance.Configuration.Save();
+			}
 			if (Instance.Configuration.Instance.UseMYSQL)
 			{
 				Logger.Log("Connecting the database ...", ConsoleColor.DarkGreen);
@@ -136,29 +143,27 @@ namespace RG.PlayerReport
 			{
 				if (Instance.Database.MySqlNotif())
 				{
-					UnturnedPlayerEvents.OnPlayerUpdatePosition += Events_OnPlayerUpdatePosition;
+					if (ConnectedPlayer.HasPermission("RocketReport.notify") || ConnectedPlayer.IsAdmin)
+					{
+						UnturnedChat.Say(ConnectedPlayer, Instance.Translate("new_reports_to_see"));
+						++Notif;
+						if (Notif == Instance.Configuration.Instance.Notifications)
+						{
+							if (Instance.MySQLON)
+							{
+								Instance.Database.MySqlNotified();
+							}
+							else
+							{
+								Logger.LogWarning("Nothing, add soon");
+							}
+						}
+					}
 				}
 			}
 			else
 			{
 				Logger.LogWarning("Nothing, add soon");
-			}
-		}
-
-		private void Events_OnPlayerUpdatePosition(IRocketPlayer MovPlayer, Vector3 NoCare)
-		{
-			if (MovPlayer.HasPermission("RocketReport.notify") || MovPlayer.IsAdmin)
-			{
-				UnturnedChat.Say(MovPlayer, Instance.Translate("new_reports_to_see"));
-				if (Instance.MySQLON)
-				{
-					Instance.Database.MySqlNotified();
-				}
-				else
-				{
-					Logger.LogWarning("Nothing, add soon");
-				}
-				UnturnedPlayerEvents.OnPlayerUpdatePosition -= Events_OnPlayerUpdatePosition;
 			}
 		}
 	}

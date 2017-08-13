@@ -6,12 +6,13 @@ using Rocket.Unturned.Chat;
 using Steamworks;
 using System;
 using System.IO;
+using System.Collections.Generic;
 
 namespace RG.PlayerReport
 {
     public class Database
     {
-        private string TableName = PlayerReport.Instance.Configuration.Instance.DatabaseTableName;
+		private static string TableName = PlayerReport.Instance.Configuration.Instance.DatabaseTableName;
 
 		public Database()
 		{
@@ -50,11 +51,11 @@ namespace RG.PlayerReport
 			{
 				MySqlConnection SQLconnection = CreateConnection();
 				MySqlCommand SQLcommand = SQLconnection.CreateCommand();
-				SQLcommand.CommandText = string.Concat("show tables like '" + PlayerReport.Instance.Configuration.Instance.DatabaseTableName + "'");
+				SQLcommand.CommandText = string.Concat("show tables like '" + TableName + "'");
 				SQLconnection.Open();
 				if (SQLcommand.ExecuteScalar() == null)
 				{
-					SQLcommand.CommandText = string.Concat("CREATE TABLE `" + PlayerReport.Instance.Configuration.Instance.DatabaseTableName + "` (`id` int(11) NOT NULL AUTO_INCREMENT,`ReportedID` varchar(32) NOT NULL,`ReporterID` varchar(32) NOT NULL,`ReportDate` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,`ReportInfo` varchar(512) DEFAULT NULL,`Notified` varchar(5) DEFAULT false,PRIMARY KEY (`id`)); ");
+					SQLcommand.CommandText = string.Concat("CREATE TABLE `" + TableName + "` (`id` int(11) NOT NULL AUTO_INCREMENT,`ReportedID` varchar(32) NOT NULL,`ReporterID` varchar(32) NOT NULL,`ReportDate` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,`ReportInfo` varchar(512) DEFAULT NULL,`Notified` varchar(5) DEFAULT false,PRIMARY KEY (`id`)); ");
 					SQLcommand.ExecuteNonQuery();
 				}
 				SQLconnection.Close();
@@ -228,7 +229,7 @@ namespace RG.PlayerReport
                 SQLcommand.Parameters.AddWithValue("@ReportedID", MReportedID);
 				SQLcommand.Parameters.AddWithValue("@ReporterID", MReporterID);
 				SQLcommand.Parameters.AddWithValue("@ReportInfo", ReportInfo);
-                SQLcommand.CommandText = "insert into `" + PlayerReport.Instance.Configuration.Instance.DatabaseTableName + "` (`ReportedID`,`ReporterID`,`ReportInfo`,`Notified`) values(@ReportedID,@ReporterID,@ReportInfo,false);";
+				SQLcommand.CommandText = string.Concat("insert into `" + TableName + "` (`ReportedID`,`ReporterID`,`ReportInfo`,`Notified`) values(@ReportedID,@ReporterID,@ReportInfo,false);");
                 SQLconnection.Open();
                 int OK = SQLcommand.ExecuteNonQuery();
                 SQLconnection.Close();
@@ -254,14 +255,7 @@ namespace RG.PlayerReport
 			{
 				MySqlConnection SQLconnection = CreateConnection();
 				MySqlCommand SQLcommand = SQLconnection.CreateCommand();
-				SQLcommand.CommandText = string.Concat(new string[]
-				{
-					"delete from `",
-					PlayerReport.Instance.Configuration.Instance.DatabaseTableName,
-					"` where id='",
-					ID,
-					"';"
-				});
+				SQLcommand.CommandText = string.Concat("delete from `" + TableName + "` where id = `" + ID + "`" );
 				SQLconnection.Open();
 				int OK = SQLcommand.ExecuteNonQuery();
 				SQLconnection.Close();
@@ -302,7 +296,7 @@ namespace RG.PlayerReport
 			{
 				MySqlConnection SQLconnection = CreateConnection();
 				MySqlCommand SQLcommand = SQLconnection.CreateCommand();
-				SQLcommand.CommandText = "SELECT `Notified`, COUNT(*) AS `HowMany` FROM `Unturned`.`Reports` WHERE Notified = 'false' GROUP BY `Notified`;";
+				SQLcommand.CommandText = string.Concat("SELECT `Notified`, COUNT(*) AS `HowMany` FROM `Unturned`.`Reports` WHERE Notified = `false` GROUP BY `Notified`;");
 				SQLconnection.Open();
 				object Ok = SQLcommand.ExecuteScalar();
 				if (Ok != null)
@@ -333,7 +327,7 @@ namespace RG.PlayerReport
 			{
 				MySqlConnection SQLconnection = CreateConnection();
 				MySqlCommand SQLcommand = SQLconnection.CreateCommand();
-				SQLcommand.CommandText = "update `Unturned`.`Reports` set Notified='true' where Notified='false';";
+				SQLcommand.CommandText = string.Concat("update `Unturned`.`Reports` set Notified = `true` where Notified = `false`");
 				SQLconnection.Open();
 				SQLcommand.ExecuteNonQuery();
 				SQLconnection.Close();
@@ -343,6 +337,138 @@ namespace RG.PlayerReport
 				Logger.LogException(ex);
 			}
 		}
-    }
+
+		public ReportData MySqlQuerySteam(CSteamID SteamId)
+		{
+			ReportData reportData = new ReportData();
+			MySqlDataReader Reader = null;
+			try
+			{
+				MySqlConnection SQLconnection = CreateConnection();
+				MySqlCommand SQLcommand = SQLconnection.CreateCommand();
+				SQLcommand.Parameters.AddWithValue("@steamid", SteamId);
+				SQLcommand.CommandText = string.Concat("SELECT id, ReportedID, ReporterID, ReportDate, ReportInfo FROM `" + TableName + "` WHERE ReportedID = @steamid ORDER BY id ASC" );
+				Reader = SQLcommand.ExecuteReader();
+				if (Reader.Read())
+				{
+					reportData = BuildReportData(Reader);
+					PlayerReport.Instance.DataFound = true;
+				}
+			}
+			catch (MySqlException ex)
+			{
+				Logger.LogException(ex);
+			}
+			finally
+			{
+				if (Reader != null)
+				{
+					Reader.Close();
+					Reader.Dispose();
+				}
+			}
+			return reportData;
+		}
+
+		public ReportData MySqlQueryID(int RepId)
+		{
+			ReportData UnsetData = new ReportData();
+			ReportData reportData = UnsetData;
+			MySqlDataReader Reader = null;
+			try
+			{
+				MySqlConnection SQLconnection = CreateConnection();
+				MySqlCommand SQLcommand = SQLconnection.CreateCommand();
+				SQLcommand.Parameters.AddWithValue("@id", RepId);
+				SQLcommand.CommandText = string.Concat("SELECT id, ReportedID, ReporterID, ReportDate, ReportInfo FROM `" + TableName + "` WHERE id = @id");
+				Reader = SQLcommand.ExecuteReader();
+				if (Reader.Read())
+				{
+					reportData = BuildReportData(Reader);
+				}
+			}
+			catch (MySqlException ex)
+			{
+				Logger.LogException(ex);
+			}
+			finally
+			{
+				if (Reader != null)
+				{
+					Reader.Close();
+					Reader.Dispose();
+				}
+			}
+			return reportData;
+		}
+
+		public bool MySqlExistSteam(CSteamID SteamId)
+		{
+			ReportData reportData = new ReportData();
+			MySqlDataReader Reader = null;
+			try
+			{
+				MySqlConnection SQLconnection = CreateConnection();
+				MySqlCommand SQLcommand = SQLconnection.CreateCommand();
+				SQLcommand.Parameters.AddWithValue("@steamid", SteamId);
+				SQLcommand.CommandText = string.Concat("SELECT id FROM `" + TableName + "` WHERE ReportedID = @steamid ORDER BY id ASC");
+				Reader = SQLcommand.ExecuteReader();
+				if (Reader.Read())
+				{
+					reportData = BuildReportData(Reader);
+					PlayerReport.Instance.DataFound = true;
+				}
+			}
+			catch (MySqlException ex)
+			{
+				Logger.LogException(ex);
+			}
+			finally
+			{
+				if (Reader != null)
+				{
+					Reader.Close();
+					Reader.Dispose();
+				}
+			}
+			return false;
+		}
+
+		public bool MySqlExistID(int RepId)
+		{
+			ReportData UnsetData = new ReportData();
+			ReportData reportData = UnsetData;
+			MySqlDataReader Reader = null;
+			try
+			{
+				MySqlConnection SQLconnection = CreateConnection();
+				MySqlCommand SQLcommand = SQLconnection.CreateCommand();
+				SQLcommand.Parameters.AddWithValue("@id", RepId);
+				SQLcommand.CommandText = string.Concat("SELECT id, ReportedID, ReporterID, ReportDate, ReportInfo FROM `" + TableName + "` WHERE id = @id");
+				Reader = SQLcommand.ExecuteReader();
+				if (Reader.Read())
+				{
+					reportData = BuildReportData(Reader);
+				}
+			}
+			catch (MySqlException ex)
+			{
+				Logger.LogException(ex);
+			}
+			finally
+			{
+				if (Reader != null)
+				{
+					Reader.Close();
+					Reader.Dispose();
+				}
+			}
+			return false;
+		}
+
+		private ReportData BuildReportData(MySqlDataReader Reader)
+		{
+			return new ReportData(Reader.GetInt32("id"), (CSteamID)Reader.GetUInt64("ReportedID"), (CSteamID)Reader.GetUInt64("ReporterID"), DateTime.FromBinary(Reader.GetInt64("ReportDate")), Reader.GetString("ReportInfo"));
+		}
+	}
 }
- 

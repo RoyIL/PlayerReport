@@ -12,6 +12,7 @@ namespace RG.PlayerReport
         public int DatabasePort;
         public bool UseMYSQL;
 		public bool LogFile;
+		public int Notifications;
 		public bool MaxCharacter;
         public int LimCharacter;
 
@@ -25,6 +26,7 @@ namespace RG.PlayerReport
             DatabasePort = 3306;
             UseMYSQL = true;
 			LogFile = false;
+			Notifications = 3;
 			MaxCharacter = true;
             LimCharacter = 150;
         }

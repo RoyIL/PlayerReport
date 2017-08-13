@@ -3,7 +3,9 @@ using Rocket.Core.Logging;
 using Rocket.Unturned.Chat;
 using Rocket.Unturned.Player;
 using SDG.Unturned;
+using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace RG.PlayerReport
 {
@@ -39,10 +41,7 @@ namespace RG.PlayerReport
 
         public List<string> Permissions
         {
-            get
-            {
-            return new List<string>() { "RocketReport.report" };
-            }
+            get { return new List<string>() { "RocketReport.report" }; }
         }
 
         public void Execute(IRocketPlayer caller, params string[] command)
@@ -87,14 +86,6 @@ namespace RG.PlayerReport
 			{
 				if (ReportText.Length <= PlayerReport.Instance.Configuration.Instance.LimCharacter)
 				{
-					
-					foreach (IRocketPlayer PlayPerm in Players)
-					{
-						if (PlayPerm.IsAdmin || PlayPerm.HasPermission("RocketReport.notify"))
-						{
-							UnturnedChat.Say(PlayPerm, PlayerReport.Instance.Translate("new_reports_to_see"));
-						}
-					}
 					if (PlayerReport.Instance.MySQLON)
 					{
 						PlayerReport.Instance.Database.MySqlAddReport(caller, Reported.CSteamID, Reporter.CSteamID, ReportText);
@@ -103,22 +94,18 @@ namespace RG.PlayerReport
 					{
 						PlayerReport.Instance.Database.LiteDBAddReport(caller, Reported.Id, Reporter.Id, ReportText);
 					}
+					if (PlayerReport.Instance.Configuration.Instance.LogFile)
+					{
+						File.AppendAllText(PlayerReport.ReportLog, "[" + DateTime.Now + "] " + Reported.DisplayName + "(" + Reported.Id + ") " + "was reported by " + Reporter.DisplayName + "(" + Reporter.Id + ") because" + ReportText + Environment.NewLine);
+					}
 				}
 				else
 				{
 					UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_report_maxchar"));
-					return;
 				}
 			}
 			else
 			{
-				foreach (IRocketPlayer PlayPerm in Players)
-				{
-					if (PlayPerm.IsAdmin || PlayPerm.HasPermission("RocketReport.notify"))
-					{
-						UnturnedChat.Say(PlayPerm, PlayerReport.Instance.Translate("new_reports_to_see"));
-					}
-				}
 				if (PlayerReport.Instance.MySQLON)
 				{
 					PlayerReport.Instance.Database.MySqlAddReport(caller, Reported.CSteamID, Reporter.CSteamID, ReportText);
@@ -127,7 +114,10 @@ namespace RG.PlayerReport
 				{
 					PlayerReport.Instance.Database.LiteDBAddReport(caller, Reported.Id, Reporter.Id, ReportText);
 				}
-				
+				if (PlayerReport.Instance.Configuration.Instance.LogFile)
+				{
+					File.AppendAllText(PlayerReport.ReportLog, "[" + DateTime.Now + "] " + Reported.DisplayName + "(" + Reported.Id + ") " + "was reported by " + Reporter.DisplayName + "(" +  Reporter.Id + ") because" + ReportText + Environment.NewLine);
+				}
 			}
         }
     }
