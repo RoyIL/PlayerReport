@@ -32,8 +32,6 @@ namespace RG.PlayerReport
 
 		public Database Database;
 
-		public List<IRocketPlayer> List = new List<IRocketPlayer>();
-
 		public override TranslationList DefaultTranslations
         {
             get
@@ -60,12 +58,6 @@ namespace RG.PlayerReport
         {
             Instance = this;
             U.Events.OnPlayerConnected += Events_OnPlayerConnected;
-			U.Events.OnPlayerDisconnected += Events_OnPlayerDisconnected;
-			foreach (SteamPlayer StPl in Provider.clients)
-			{
-				IRocketPlayer Play = UnturnedPlayer.FromSteamPlayer(StPl);
-				List.Add(Play);
-			}
 			if (Instance.Configuration.Instance.UseMYSQL)
 			{
 				Logger.Log("Connecting the database ...", ConsoleColor.DarkGreen);
@@ -74,21 +66,30 @@ namespace RG.PlayerReport
 				{
 					Logger.Log("To connect to the database, please check the settings!", ConsoleColor.DarkGreen);
 					Logger.Log("Report Plugin has been loaded without MySQL!", ConsoleColor.DarkGreen);
-					File.AppendAllText(ReportLog, "[" + DateTime.Now + "] Report Plugin has been loaded without MySQL!" + System.Environment.NewLine);
+					if (Instance.Configuration.Instance.LogFile)
+					{
+						File.AppendAllText(ReportLog, "[" + DateTime.Now + "] Report Plugin has been loaded without MySQL!" + System.Environment.NewLine);
+					}
 
 				}
 				else
 				{
 					Logger.Log("Successful connection!", ConsoleColor.DarkGreen);
 					Logger.Log("Report Plugin has been loaded with MySQL!", ConsoleColor.DarkGreen);
-					File.AppendAllText(ReportLog, "[" + DateTime.Now + "] Report Plugin has been loaded with MySQL!" + System.Environment.NewLine);
+					if (Instance.Configuration.Instance.LogFile)
+					{
+						File.AppendAllText(ReportLog, "[" + DateTime.Now + "] Report Plugin has been loaded with MySQL!" + System.Environment.NewLine);
+					}
 				}
 			}
 			else if (!Instance.Configuration.Instance.UseMYSQL)
 			{
 				Instance.MySQLON = false;
 				Logger.Log("Report Plugin has been loaded without MySQL!", ConsoleColor.DarkGreen);
-				File.AppendAllText(ReportLog, "[" + DateTime.Now + "] Report Plugin has been loaded without MySQL!" + System.Environment.NewLine);
+				if (Instance.Configuration.Instance.LogFile)
+				{
+					File.AppendAllText(ReportLog, "[" + DateTime.Now + "] Report Plugin has been loaded without MySQL!" + System.Environment.NewLine);
+				}
 			}
 			else
 			{
@@ -98,14 +99,20 @@ namespace RG.PlayerReport
 					Instance.Configuration.Instance.UseMYSQL = false;
 					Instance.Configuration.Save();
 					Logger.Log("Report Plugin has been loaded without MySQL!", ConsoleColor.DarkGreen);
-					File.AppendAllText(ReportLog, "[" + DateTime.Now + "] Report Plugin has been loaded without MySQL!" + System.Environment.NewLine);
+					if (Instance.Configuration.Instance.LogFile)
+					{
+						File.AppendAllText(ReportLog, "[" + DateTime.Now + "] Report Plugin has been loaded without MySQL!" + System.Environment.NewLine);
+					}
 				}
 				else
 				{
 					Instance.Configuration.Instance.UseMYSQL = true;
 					Instance.Configuration.Save();
 					Logger.Log("Report Plugin has been loaded with MySQL!", ConsoleColor.DarkGreen);
-					File.AppendAllText(ReportLog, "[" + DateTime.Now + "] Report Plugin has been loaded with MySQL!" + System.Environment.NewLine);
+					if (Instance.Configuration.Instance.LogFile)
+					{
+						File.AppendAllText(ReportLog, "[" + DateTime.Now + "] Report Plugin has been loaded with MySQL!" + System.Environment.NewLine);
+					}
 				}
 
 			}
@@ -115,32 +122,26 @@ namespace RG.PlayerReport
         {
             Instance = null;
             U.Events.OnPlayerConnected -= Events_OnPlayerConnected;
-			U.Events.OnPlayerDisconnected -= Events_OnPlayerDisconnected;
 			Logger.Log("Report Plugin has been unloaded!", ConsoleColor.DarkGreen);
-			File.AppendAllText(ReportLog, "[" + DateTime.Now + "] Report Plugin has been unloaded!" + System.Environment.NewLine);
-		}
-
-		private void Events_OnPlayerDisconnected(IRocketPlayer DisconnectedPlayer)
-		{
-			List.Remove(DisconnectedPlayer);
+			if (Instance.Configuration.Instance.LogFile)
+			{
+				File.AppendAllText(ReportLog, "[" + DateTime.Now + "] Report Plugin has been unloaded!" + System.Environment.NewLine);
+			}
 		}
 
 		private void Events_OnPlayerConnected(IRocketPlayer ConnectedPlayer)
 		{
-			UnturnedPlayer ConPlayer = (UnturnedPlayer)ConnectedPlayer;
-			Logger.LogWarning(ConnectedPlayer.DisplayName + " connected with IP " + ConPlayer.IP);
-			List.Add(ConnectedPlayer);
+			Logger.LogWarning(ConnectedPlayer.DisplayName + " connected with IP " + ((UnturnedPlayer)ConnectedPlayer).IP);
 			if (Instance.MySQLON)
 			{
-				Instance.Database.MySqlNotif();
+				if (Instance.Database.MySqlNotif())
+				{
+					UnturnedPlayerEvents.OnPlayerUpdatePosition += Events_OnPlayerUpdatePosition;
+				}
 			}
 			else
 			{
-				//soon Instance.Database.LiteDBNotif();
-			}
-			if (NotifyExist)
-			{
-				UnturnedPlayerEvents.OnPlayerUpdatePosition += Events_OnPlayerUpdatePosition;
+				Logger.LogWarning("Nothing, add soon");
 			}
 		}
 
@@ -155,7 +156,7 @@ namespace RG.PlayerReport
 				}
 				else
 				{
-					//not yet Instance.Database.LiteDBNotified();
+					Logger.LogWarning("Nothing, add soon");
 				}
 				UnturnedPlayerEvents.OnPlayerUpdatePosition -= Events_OnPlayerUpdatePosition;
 			}

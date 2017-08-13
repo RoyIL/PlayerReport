@@ -2,7 +2,7 @@
 using Rocket.Core.Logging;
 using Rocket.Unturned.Chat;
 using Rocket.Unturned.Player;
-using Steamworks;
+using SDG.Unturned;
 using System.Collections.Generic;
 
 namespace RG.PlayerReport
@@ -59,7 +59,8 @@ namespace RG.PlayerReport
             }
             UnturnedPlayer Reported = UnturnedPlayer.FromName(command[0]);
             UnturnedPlayer Reporter = (UnturnedPlayer)caller;
-            if (Reported == null)
+			List<SteamPlayer> Players = Provider.clients;
+			if (Reported == null)
             {
                 UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_player_not_found"));
                 return;
@@ -86,6 +87,14 @@ namespace RG.PlayerReport
 			{
 				if (ReportText.Length <= PlayerReport.Instance.Configuration.Instance.LimCharacter)
 				{
+					
+					foreach (IRocketPlayer PlayPerm in Players)
+					{
+						if (PlayPerm.IsAdmin || PlayPerm.HasPermission("RocketReport.notify"))
+						{
+							UnturnedChat.Say(PlayPerm, PlayerReport.Instance.Translate("new_reports_to_see"));
+						}
+					}
 					if (PlayerReport.Instance.MySQLON)
 					{
 						PlayerReport.Instance.Database.MySqlAddReport(caller, Reported.CSteamID, Reporter.CSteamID, ReportText);
@@ -94,32 +103,22 @@ namespace RG.PlayerReport
 					{
 						PlayerReport.Instance.Database.LiteDBAddReport(caller, Reported.Id, Reporter.Id, ReportText);
 					}
-					foreach (IRocketPlayer PlayPerm in PlayerReport.Instance.List)
-					{
-						if (PlayPerm.IsAdmin || PlayPerm.HasPermission("RocketReport.notify"))
-						{
-							if (PlayerReport.Instance.MySQLON)
-							{
-								PlayerReport.Instance.Database.MySqlNotif();
-							}
-							else
-							{
-								// soon PlayerReport.Instance.Database.LiteDBNotif();
-							}
-							if (PlayerReport.Instance.NotifyExist)
-							{
-								UnturnedChat.Say(PlayPerm, PlayerReport.Instance.Translate("new_reports_to_see"));
-							}
-						}
-					}
 				}
 				else
 				{
 					UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_report_maxchar"));
+					return;
 				}
 			}
 			else
 			{
+				foreach (IRocketPlayer PlayPerm in Players)
+				{
+					if (PlayPerm.IsAdmin || PlayPerm.HasPermission("RocketReport.notify"))
+					{
+						UnturnedChat.Say(PlayPerm, PlayerReport.Instance.Translate("new_reports_to_see"));
+					}
+				}
 				if (PlayerReport.Instance.MySQLON)
 				{
 					PlayerReport.Instance.Database.MySqlAddReport(caller, Reported.CSteamID, Reporter.CSteamID, ReportText);
@@ -128,24 +127,7 @@ namespace RG.PlayerReport
 				{
 					PlayerReport.Instance.Database.LiteDBAddReport(caller, Reported.Id, Reporter.Id, ReportText);
 				}
-				foreach (IRocketPlayer PlayPerm in PlayerReport.Instance.List)
-				{
-					if (PlayPerm.IsAdmin || PlayPerm.HasPermission("RocketReport.notify"))
-					{
-						if (PlayerReport.Instance.MySQLON)
-						{
-							PlayerReport.Instance.Database.MySqlNotif();
-						}
-						else
-						{
-							//soon PlayerReport.Instance.Database.LiteDBNotif();
-						}
-						if (PlayerReport.Instance.NotifyExist)
-						{
-							UnturnedChat.Say(PlayPerm, PlayerReport.Instance.Translate("new_reports_to_see"));
-						}
-					}
-				}
+				
 			}
         }
     }

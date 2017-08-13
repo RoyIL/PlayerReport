@@ -295,7 +295,7 @@ namespace RG.PlayerReport
 			}
 		}
 
-		public void MySqlNotif()
+		public bool MySqlNotif()
 		{
 			int CountVal = 0;
 			try
@@ -311,15 +311,20 @@ namespace RG.PlayerReport
 				}
 				SQLcommand.ExecuteNonQuery();
 				SQLconnection.Close();
+				if (CountVal > 0)
+				{
+					return true;
+				}
+				else
+				{
+					return false;
+				}
 			}
 			catch (Exception ex)
 			{
 				Logger.LogException(ex);
 			}
-			if (CountVal > 0)
-			{
-				PlayerReport.Instance.NotifyExist = true;
-			}
+			return false;
 		}
 
 		public void MySqlNotified()
