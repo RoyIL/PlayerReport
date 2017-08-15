@@ -15,20 +15,24 @@ namespace RG.PlayerReport
 		public int Notifications;
 		public bool MaxCharacter;
         public int LimCharacter;
+		public bool TestCode;
+		public string KeyTestCode;
 
-        public void LoadDefaults()
-        {
-            DatabaseAddress = "localhost";
-            DatabaseUsername = "root";
-            DatabasePassword = "password";
-            DatabaseName = "Unturned";
-            DatabaseTableName = "Reports";
-            DatabasePort = 3306;
-            UseMYSQL = true;
+		public void LoadDefaults()
+		{
+			DatabaseAddress = "localhost";
+			DatabaseUsername = "root";
+			DatabasePassword = "password";
+			DatabaseName = "Unturned";
+			DatabaseTableName = "Reports";
+			DatabasePort = 3306;
+			UseMYSQL = true;
 			LogFile = false;
 			Notifications = 3;
 			MaxCharacter = true;
-            LimCharacter = 150;
-        }
+			LimCharacter = 150;
+			TestCode = false;
+			KeyTestCode = "admintests1567";
+		}
     }
 }

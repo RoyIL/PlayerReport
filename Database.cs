@@ -10,8 +10,8 @@ using System.Collections.Generic;
 
 namespace RG.PlayerReport
 {
-    public class Database
-    {
+	public class Database
+	{
 		private static string TableName = PlayerReport.Instance.Configuration.Instance.DatabaseTableName;
 
 		public Database()
@@ -21,32 +21,32 @@ namespace RG.PlayerReport
 		}
 
 		private MySqlConnection CreateConnection()
-        {
-            MySqlConnection SQLconnection = null;
-            try
-            {
+		{
+			MySqlConnection SQLconnection = null;
+			try
+			{
 				if (PlayerReport.Instance.Configuration.Instance.DatabasePort <= 0)
 				{
 					PlayerReport.Instance.Configuration.Instance.DatabasePort = 3306;
 					PlayerReport.Instance.Configuration.Save();
 				}
-                SQLconnection = new MySqlConnection(string.Format("SERVER={0};DATABASE={1};UID={2};PASSWORD={3};PORT={4};", new object[] {
-                    PlayerReport.Instance.Configuration.Instance.DatabaseAddress,
-                    PlayerReport.Instance.Configuration.Instance.DatabaseName,
-                    PlayerReport.Instance.Configuration.Instance.DatabaseUsername,
-                    PlayerReport.Instance.Configuration.Instance.DatabasePassword,
-                    PlayerReport.Instance.Configuration.Instance.DatabasePort}));
-            }
-            catch (Exception ex)
-            {
-                Logger.LogException(ex);
+				SQLconnection = new MySqlConnection(string.Format("SERVER={0};DATABASE={1};UID={2};PASSWORD={3};PORT={4};", new object[] {
+					PlayerReport.Instance.Configuration.Instance.DatabaseAddress,
+					PlayerReport.Instance.Configuration.Instance.DatabaseName,
+					PlayerReport.Instance.Configuration.Instance.DatabaseUsername,
+					PlayerReport.Instance.Configuration.Instance.DatabasePassword,
+					PlayerReport.Instance.Configuration.Instance.DatabasePort}));
+			}
+			catch (Exception ex)
+			{
+				Logger.LogException(ex);
 				PlayerReport.Instance.MySQLON = false;
-            }
-            return SQLconnection;
-        }
+			}
+			return SQLconnection;
+		}
 
-        public void CheckSchema()
-        {
+		public void CheckSchema()
+		{
 			try
 			{
 				MySqlConnection SQLconnection = CreateConnection();
@@ -65,7 +65,7 @@ namespace RG.PlayerReport
 				Logger.LogException(exception);
 				PlayerReport.Instance.MySQLON = false;
 			}
-        }
+		}
 
 		public void LiteDBAddReport(IRocketPlayer caller, string ReportedID, string ReporterID, string ReportText)
 		{
@@ -76,7 +76,7 @@ namespace RG.PlayerReport
 			using (LiteDatabase LiteDBFile = new LiteDatabase(Path.Combine("Database", PlayerReport.Instance.Configuration.Instance.DatabaseName + ".db")))
 			using (LiteTransaction Trans = LiteDBFile.BeginTrans())
 			{
-				var ReportsCollection = LiteDBFile.GetCollection<AddReportDB>(TableName);
+				LiteCollection<AddReportDB> ReportsCollection = LiteDBFile.GetCollection<AddReportDB>(TableName);
 				var AddReportsDB = new AddReportDB
 				{
 					ReportedID = ReportedID,
@@ -208,8 +208,12 @@ namespace RG.PlayerReport
             [BsonId]
             public int ID { get; set; }
 
+			[BsonIndex(true)]
 			public string ReportedID { get; set; }
+
+			[BsonIndex(true)]
 			public string ReporterID { get; set; }
+
             public DateTime ReportDate { get; set; }
             public string ReportInfo { get; set; }
 			public int Notified { get; set; }
