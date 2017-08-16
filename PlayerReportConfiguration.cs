@@ -11,12 +11,12 @@ namespace RG.PlayerReport
         public string DatabaseTableName;
         public int DatabasePort;
         public bool UseMYSQL;
-		public bool LogFile;
 		public int Notifications;
 		public bool MaxCharacter;
         public int LimCharacter;
 		public bool TestCode;
 		public string KeyTestCode;
+		public bool LogFile;
 
 		public void LoadDefaults()
 		{
@@ -27,12 +27,12 @@ namespace RG.PlayerReport
 			DatabaseTableName = "Reports";
 			DatabasePort = 3306;
 			UseMYSQL = true;
-			LogFile = false;
 			Notifications = 3;
 			MaxCharacter = true;
 			LimCharacter = 150;
 			TestCode = false;
 			KeyTestCode = "admintests1567";
+			LogFile = false;
 		}
     }
 }

@@ -3,6 +3,7 @@ using MySql.Data.MySqlClient;
 using Logger = Rocket.Core.Logging.Logger;
 using Rocket.API;
 using Rocket.Unturned.Chat;
+using Rocket.Unturned.Player;
 using Steamworks;
 using System;
 using System.IO;
@@ -69,61 +70,75 @@ namespace RG.PlayerReport
 
 		public void LiteDBAddReport(IRocketPlayer caller, string ReportedID, string ReporterID, string ReportText)
 		{
-			if (!Directory.Exists("Database"))
+			try
 			{
-				Directory.CreateDirectory("Database");
-			}
-			using (LiteDatabase LiteDBFile = new LiteDatabase(Path.Combine("Database", PlayerReport.Instance.Configuration.Instance.DatabaseName + ".db")))
-			using (LiteTransaction Trans = LiteDBFile.BeginTrans())
-			{
-				LiteCollection<AddReportDB> ReportsCollection = LiteDBFile.GetCollection<AddReportDB>(TableName);
-				var AddReportsDB = new AddReportDB
+				if (!Directory.Exists("Database"))
 				{
-					ReportedID = ReportedID,
-					ReporterID = ReporterID,
-					ReportDate = DateTime.UtcNow,
-					ReportInfo = ReportText,
-					Notified = 0
-				};
-				ReportsCollection.Insert(AddReportsDB);
-				Trans.Commit();
-			}
-			UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_add_successful"));
-		}
-
-		public void LiteDBDelReport(IRocketPlayer caller, string ID)
-        {
-            if (Directory.Exists("Database"))
-            {
+					Directory.CreateDirectory("Database");
+				}
 				using (LiteDatabase LiteDBFile = new LiteDatabase(Path.Combine("Database", PlayerReport.Instance.Configuration.Instance.DatabaseName + ".db")))
 				using (LiteTransaction Trans = LiteDBFile.BeginTrans())
 				{
 					LiteCollection<AddReportDB> ReportsCollection = LiteDBFile.GetCollection<AddReportDB>(TableName);
-					if (ReportsCollection.Exists(Query.EQ("_id", ID)))
+					var AddReportsDB = new AddReportDB
 					{
-						ReportsCollection.Delete(ID);
-						if (caller is ConsolePlayer)
-						{
+						ReportedID = ReportedID,
+						ReporterID = ReporterID,
+						ReportDate = DateTime.UtcNow,
+						ReportInfo = ReportText,
+						Notified = 0
+					};
+					ReportsCollection.Insert(AddReportsDB);
+					Trans.Commit();
+				}
+				UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_add_successful"));
+			}
+			catch (Exception ex)
+			{
+				Logger.Log(ex);
+			}
+		}
 
-							Logger.Log(PlayerReport.Instance.Translate("command_del_successful"));
+		public void LiteDBDelReport(IRocketPlayer caller, string ID)
+        {
+			try
+			{
+				if (Directory.Exists("Database"))
+				{
+					using (LiteDatabase LiteDBFile = new LiteDatabase(Path.Combine("Database", PlayerReport.Instance.Configuration.Instance.DatabaseName + ".db")))
+					using (LiteTransaction Trans = LiteDBFile.BeginTrans())
+					{
+						LiteCollection<AddReportDB> ReportsCollection = LiteDBFile.GetCollection<AddReportDB>(TableName);
+						if (ReportsCollection.Exists(Query.EQ("_id", ID)))
+						{
+							ReportsCollection.Delete(ID);
+							if (caller is ConsolePlayer)
+							{
+
+								Logger.Log(PlayerReport.Instance.Translate("command_del_successful"));
+							}
+							else
+							{
+								UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_del_successful"));
+							}
 						}
 						else
 						{
-							UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_del_successful"));
+							UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_report_not_found"));
 						}
+						Trans.Commit();
 					}
-					else
-					{
-						UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_report_not_found"));
-					}
-					Trans.Commit();
 				}
-            }
-            else
-            {
-                UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_data_not_found"));
-            }
-        }
+				else
+				{
+					UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_data_not_found"));
+				}
+			}
+			catch (Exception ex)
+			{
+				Logger.Log(ex);
+			}
+		}
 
 		//working
 

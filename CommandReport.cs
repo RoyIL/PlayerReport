@@ -57,49 +57,31 @@ namespace RG.PlayerReport
                 return;
             }
 			// To admins test if this command is working
-			if (PlayerReport.Instance.Configuration.Instance.TestCode)
+			if (PlayerReport.Instance.Configuration.Instance.TestCode && (command[0] == PlayerReport.Instance.Configuration.Instance.KeyTestCode))
 			{
-				if (command[0] == PlayerReport.Instance.Configuration.Instance.KeyTestCode)
+				UnturnedPlayer Reported1 = UnturnedPlayer.FromName(command[1]);
+				UnturnedPlayer Reporter1 = (UnturnedPlayer)caller;
+				if (Reported1 == null)
 				{
-					UnturnedPlayer Reported1 = UnturnedPlayer.FromName(command[1]);
-					UnturnedPlayer Reporter1 = (UnturnedPlayer)caller;
-					if (Reported1 == null)
-					{
-						UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_player_not_found"));
-						return;
-					}
-					string ReportText1 = "";
-					int num1 = 0;
-					foreach (var s in command)
-					{
-						num1++;
-						if (num1 == 1) continue;
-						ReportText1 = ReportText1 + " " + s;
-					}
-					if (PlayerReport.Instance.Configuration.Instance.LimCharacter <= 5)
-					{
-						PlayerReport.Instance.Configuration.Instance.DatabasePort = 50;
-						PlayerReport.Instance.Configuration.Save();
-					}
-					if (PlayerReport.Instance.Configuration.Instance.MaxCharacter)
-					{
-						if (ReportText1.Length <= PlayerReport.Instance.Configuration.Instance.LimCharacter)
-						{
-							if (PlayerReport.Instance.MySQLON)
-							{
-								PlayerReport.Instance.Database.MySqlAddReport(caller, Reported1.CSteamID, Reporter1.CSteamID, ReportText1);
-							}
-							else
-							{
-								PlayerReport.Instance.Database.LiteDBAddReport(caller, Reported1.Id, Reporter1.Id, ReportText1);
-							}
-						}
-						else
-						{
-							UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_report_maxchar"));
-						}
-					}
-					else
+					UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_player_not_found"));
+					return;
+				}
+				string ReportText1 = "";
+				int num1 = 0;
+				foreach (var c in command)
+				{
+					num1++;
+					if (num1 == 1) continue;
+					ReportText1 = ReportText1 + " " + c;
+				}
+				if (PlayerReport.Instance.Configuration.Instance.LimCharacter <= 5)
+				{
+					PlayerReport.Instance.Configuration.Instance.DatabasePort = 50;
+					PlayerReport.Instance.Configuration.Save();
+				}
+				if (PlayerReport.Instance.Configuration.Instance.MaxCharacter)
+				{
+					if (ReportText1.Length <= PlayerReport.Instance.Configuration.Instance.LimCharacter)
 					{
 						if (PlayerReport.Instance.MySQLON)
 						{
@@ -110,12 +92,26 @@ namespace RG.PlayerReport
 							PlayerReport.Instance.Database.LiteDBAddReport(caller, Reported1.Id, Reporter1.Id, ReportText1);
 						}
 					}
-					return;
+					else
+					{
+						UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_report_maxchar"));
+					}
 				}
+				else
+				{
+					if (PlayerReport.Instance.MySQLON)
+					{
+						PlayerReport.Instance.Database.MySqlAddReport(caller, Reported1.CSteamID, Reporter1.CSteamID, ReportText1);
+					}
+					else
+					{
+						PlayerReport.Instance.Database.LiteDBAddReport(caller, Reported1.Id, Reporter1.Id, ReportText1);
+					}
+				}
+				return;
 			}
 			UnturnedPlayer Reported = UnturnedPlayer.FromName(command[0]);
             UnturnedPlayer Reporter = (UnturnedPlayer)caller;
-			List<SteamPlayer> Players = Provider.clients;
 			if (Reported == null)
 			{
 				UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_player_not_found"));
