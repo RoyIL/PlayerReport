@@ -36,7 +36,6 @@
     <Compile Include="PlayerReport.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="CommandReports.cs" />
-    <Compile Include="ReportData.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
@@ -53,11 +52,6 @@
     </Reference>
     <Reference Include="I18N.West">
       <HintPath>Libraries\I18N.West.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="LiteDB, Version=3.0.1.0, Culture=neutral, PublicKeyToken=4ee40123013c9f27, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>Libraries\LiteDB.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="MySql.Data">

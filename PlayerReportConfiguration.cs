@@ -26,7 +26,6 @@ namespace RG.PlayerReport
 			DatabaseName = "Unturned";
 			DatabaseTableName = "Reports";
 			DatabasePort = 3306;
-			UseMYSQL = true;
 			Notifications = 3;
 			MaxCharacter = true;
 			LimCharacter = 150;

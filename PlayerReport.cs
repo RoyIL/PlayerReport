@@ -1,28 +1,16 @@
 ﻿using Rocket.API;
 using Rocket.API.Collections;
-using Rocket.Core;
 using Logger = Rocket.Core.Logging.Logger;
-using Rocket.Core.Logging;
 using Rocket.Core.Plugins;
 using Rocket.Unturned;
 using Rocket.Unturned.Chat;
-using Rocket.Unturned.Events;
 using Rocket.Unturned.Player;
-using Rocket.Unturned.Plugins;
-using SDG.Unturned;
-using Steamworks;
 using System;
-using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using UnityEngine;
 
 namespace RG.PlayerReport
 {
-    public class PlayerReport : RocketPlugin<PlayerReportConfiguration>
+	public class PlayerReport : RocketPlugin<PlayerReportConfiguration>
     {
         public static PlayerReport Instance;
 
@@ -65,63 +53,26 @@ namespace RG.PlayerReport
 				Instance.Configuration.Instance.Notifications = 3;
 				Instance.Configuration.Save();
 			}
-			if (Instance.Configuration.Instance.UseMYSQL)
+			Logger.Log("Connecting the database ...", ConsoleColor.DarkGreen);
+			Database = new Database();
+			if (!Instance.MySQLON)
 			{
-				Logger.Log("Connecting the database ...", ConsoleColor.DarkGreen);
-				Database = new Database();
-				if (!Instance.MySQLON)
-				{
-					Logger.Log("To connect to the database, please check the settings!", ConsoleColor.DarkGreen);
-					Logger.Log("Report Plugin has been loaded without MySQL!", ConsoleColor.DarkGreen);
-					if (Instance.Configuration.Instance.LogFile)
-					{
-						File.AppendAllText(ReportLog, "[" + DateTime.Now + "] Report Plugin has been loaded without MySQL!" + System.Environment.NewLine);
-					}
-
-				}
-				else
-				{
-					Logger.Log("Successful connection!", ConsoleColor.DarkGreen);
-					Logger.Log("Report Plugin has been loaded with MySQL!", ConsoleColor.DarkGreen);
-					if (Instance.Configuration.Instance.LogFile)
-					{
-						File.AppendAllText(ReportLog, "[" + DateTime.Now + "] Report Plugin has been loaded with MySQL!" + System.Environment.NewLine);
-					}
-				}
-			}
-			else if (!Instance.Configuration.Instance.UseMYSQL)
-			{
-				Instance.MySQLON = false;
+				Logger.Log("To connect to the database, please check the settings!", ConsoleColor.DarkGreen);
 				Logger.Log("Report Plugin has been loaded without MySQL!", ConsoleColor.DarkGreen);
 				if (Instance.Configuration.Instance.LogFile)
 				{
 					File.AppendAllText(ReportLog, "[" + DateTime.Now + "] Report Plugin has been loaded without MySQL!" + System.Environment.NewLine);
 				}
+			
 			}
 			else
 			{
-				Database = new Database();
-				if (!Instance.MySQLON)
+				Logger.Log("Successful connection!", ConsoleColor.DarkGreen);
+				Logger.Log("Report Plugin has been loaded with MySQL!", ConsoleColor.DarkGreen);
+				if (Instance.Configuration.Instance.LogFile)
 				{
-					Instance.Configuration.Instance.UseMYSQL = false;
-					Instance.Configuration.Save();
-					Logger.Log("Report Plugin has been loaded without MySQL!", ConsoleColor.DarkGreen);
-					if (Instance.Configuration.Instance.LogFile)
-					{
-						File.AppendAllText(ReportLog, "[" + DateTime.Now + "] Report Plugin has been loaded without MySQL!" + System.Environment.NewLine);
-					}
+					File.AppendAllText(ReportLog, "[" + DateTime.Now + "] Report Plugin has been loaded with MySQL!" + System.Environment.NewLine);
 				}
-				else
-				{
-					Instance.Configuration.Instance.UseMYSQL = true;
-					Instance.Configuration.Save();
-					Logger.Log("Report Plugin has been loaded with MySQL!", ConsoleColor.DarkGreen);
-					if (Instance.Configuration.Instance.LogFile)
-					{
-						File.AppendAllText(ReportLog, "[" + DateTime.Now + "] Report Plugin has been loaded with MySQL!" + System.Environment.NewLine);
-					}
-				}
-
 			}
 		}
 
@@ -139,31 +90,17 @@ namespace RG.PlayerReport
 		private void Events_OnPlayerConnected(IRocketPlayer ConnectedPlayer)
 		{
 			Logger.LogWarning(ConnectedPlayer.DisplayName + " connected with IP " + ((UnturnedPlayer)ConnectedPlayer).IP);
-			if (Instance.MySQLON)
+			if (Instance.MySQLON && Instance.Database.MySqlNotif())
 			{
-				if (Instance.Database.MySqlNotif())
+				if (ConnectedPlayer.HasPermission("RocketReport.notify") || ConnectedPlayer.IsAdmin)
 				{
-					if (ConnectedPlayer.HasPermission("RocketReport.notify") || ConnectedPlayer.IsAdmin)
+					UnturnedChat.Say(ConnectedPlayer, Instance.Translate("new_reports_to_see"));
+					++Notif;
+					if (Notif == Instance.Configuration.Instance.Notifications)
 					{
-						UnturnedChat.Say(ConnectedPlayer, Instance.Translate("new_reports_to_see"));
-						++Notif;
-						if (Notif == Instance.Configuration.Instance.Notifications)
-						{
-							if (Instance.MySQLON)
-							{
-								Instance.Database.MySqlNotified();
-							}
-							else
-							{
-								Logger.LogWarning("Nothing, add soon");
-							}
-						}
+						Instance.Database.MySqlNotified();
 					}
 				}
-			}
-			else
-			{
-				Logger.LogWarning("Nothing, add soon");
 			}
 		}
 	}
