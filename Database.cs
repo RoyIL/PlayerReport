@@ -4,11 +4,10 @@ using Rocket.API;
 using Rocket.Unturned.Chat;
 using Steamworks;
 using System;
-using System.IO;
 
 namespace RG.PlayerReport
 {
-	public class Database
+    public class Database
 	{
 		private static string TableName = PlayerReport.Instance.Configuration.Instance.DatabaseTableName;
 
@@ -134,36 +133,29 @@ namespace RG.PlayerReport
 			}
 		}
 
-		public bool MySqlNotif()
+		public ushort MySqlNotif()
 		{
-			int CountVal = 0;
+            ushort CountVal = 0;
 			try
 			{
 				MySqlConnection SQLconnection = CreateConnection();
 				MySqlCommand SQLcommand = SQLconnection.CreateCommand();
-				SQLcommand.CommandText = string.Concat("SELECT `Notified`, COUNT(*) AS `HowMany` FROM `Unturned`.`Reports` WHERE Notified = `false` GROUP BY `Notified`;");
+				SQLcommand.CommandText = string.Concat("SELECT COUNT(*) AS `HowMany` FROM `" + TableName + "` WHERE `Notified` = '0' GROUP BY `Notified`;");
 				SQLconnection.Open();
 				object Ok = SQLcommand.ExecuteScalar();
 				if (Ok != null)
 				{
-					int.TryParse(Ok.ToString(), out CountVal);
+                    CountVal = Convert.ToUInt16(Ok);
 				}
-				SQLcommand.ExecuteNonQuery();
 				SQLconnection.Close();
-				if (CountVal > 0)
-				{
-					return true;
-				}
-				else
-				{
-					return false;
-				}
+
+                return CountVal;
 			}
 			catch (Exception ex)
 			{
 				Logger.LogException(ex);
+                return CountVal;
 			}
-			return false;
 		}
 
 		public void MySqlNotified()
@@ -172,7 +164,7 @@ namespace RG.PlayerReport
 			{
 				MySqlConnection SQLconnection = CreateConnection();
 				MySqlCommand SQLcommand = SQLconnection.CreateCommand();
-				SQLcommand.CommandText = string.Concat("update `Unturned`.`Reports` set Notified = `true` where Notified = `false`");
+				SQLcommand.CommandText = string.Concat("update `" + TableName + "` set `Notified` = '1' where `Notified` = '0'");
 				SQLconnection.Open();
 				SQLcommand.ExecuteNonQuery();
 				SQLconnection.Close();

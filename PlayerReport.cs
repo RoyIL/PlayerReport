@@ -37,7 +37,7 @@ namespace RG.PlayerReport
                     { "command_erro_saving", "An error occurred with database." },
                     { "command_report_not_found", "Report not found." },
 					{ "command_report_maxchar", "The reason for the report has exceeded the character limit." },
-					{ "new_reports_to_see", "There are new reports for you to review." },
+					{ "new_reports_to_see", "There are new reports for you to review, {0} reports." },
 					{ "invalid_num", "Please enter a valid number."},
 					{ "command_report_or_steam_not_found", "The id of the report or steam id was not found."}
 				};
@@ -90,15 +90,15 @@ namespace RG.PlayerReport
 		private void Events_OnPlayerConnected(IRocketPlayer ConnectedPlayer)
 		{
 			Logger.LogWarning(ConnectedPlayer.DisplayName + " connected with IP " + ((UnturnedPlayer)ConnectedPlayer).IP);
-			if (Instance.MySQLON && Instance.Database.MySqlNotif())
+            if (Instance.MySQLON && Instance.Database.MySqlNotif() > 0)
 			{
-				if (ConnectedPlayer.HasPermission("RocketReport.notify") || ConnectedPlayer.IsAdmin)
+                if (ConnectedPlayer.HasPermission("RocketReport.notify") || ConnectedPlayer.IsAdmin)
 				{
-					UnturnedChat.Say(ConnectedPlayer, Instance.Translate("new_reports_to_see"));
-					++Notif;
+                    UnturnedChat.Say(ConnectedPlayer, Instance.Translate("new_reports_to_see", Instance.Database.MySqlNotif()));
+					Notif++;
 					if (Notif == Instance.Configuration.Instance.Notifications)
 					{
-						Instance.Database.MySqlNotified();
+                        Instance.Database.MySqlNotified();
 					}
 				}
 			}
