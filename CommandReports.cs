@@ -65,7 +65,7 @@ namespace RG.PlayerReport
 								return;
 							}
 							PlayerReport.Instance.Database.MySqlDelReport(caller, command[1]);
-							if (PlayerReport.Instance.Configuration.Instance.LogFile)
+							if (PlayerReport.Instance.Logg)
 							{
 								File.AppendAllText(PlayerReport.ReportLog, "[" + DateTime.Now + "] " + caller.DisplayName + "(" + ((UnturnedPlayer)caller).Id + ") " + "deleted report with id " + command[1] + Environment.NewLine);
 							}

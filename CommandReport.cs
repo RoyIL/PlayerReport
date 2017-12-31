@@ -129,7 +129,7 @@ namespace RG.PlayerReport
 						if (ReportText.Length <= PlayerReport.Instance.Configuration.Instance.LimCharacter)
 						{
 							PlayerReport.Instance.Database.MySqlAddReport(caller, Reported.CSteamID, Reporter.CSteamID, ReportText);
-							if (PlayerReport.Instance.Configuration.Instance.LogFile)
+							if (PlayerReport.Instance.Logg)
 							{
 								File.AppendAllText(PlayerReport.ReportLog, "[" + DateTime.Now + "] " + Reported.DisplayName + "(" + Reported.Id + ") " + "was reported by " + Reporter.DisplayName + "(" + Reporter.Id + ") because" + ReportText + Environment.NewLine);
 							}
@@ -142,7 +142,7 @@ namespace RG.PlayerReport
 					else
 					{
 						PlayerReport.Instance.Database.MySqlAddReport(caller, Reported.CSteamID, Reporter.CSteamID, ReportText);
-						if (PlayerReport.Instance.Configuration.Instance.LogFile)
+						if (PlayerReport.Instance.Logg)
 						{
 							File.AppendAllText(PlayerReport.ReportLog, "[" + DateTime.Now + "] " + Reported.DisplayName + "(" + Reported.Id + ") " + "was reported by " + Reporter.DisplayName + "(" + Reporter.Id + ") because" + ReportText + Environment.NewLine);
 						}
