@@ -10,38 +10,17 @@ namespace RG.PlayerReport
 {
 	public class CommandReport : IRocketCommand
     {
-        public string Help
-        {
-            get { return "Report malicious players"; }
-        }
+        public string Help => "Report malicious players";
 
-        public string Name
-        {
-            get { return "report"; }
-        }
+        public string Name => "report";
 
-        public string Syntax
-        {
-            get { return "<player> [reason]"; }
-        }
+        public string Syntax => "<player> [reason]";
 
-        public List<string> Aliases
-        {
-            get { return new List<string>(); }
-        }
+        public List<string> Aliases => new List<string>();
+	
+        public AllowedCaller AllowedCaller => AllowedCaller.Both;
 
-        public AllowedCaller AllowedCaller
-        {
-            get
-            {
-                return AllowedCaller.Both;
-            }
-        }
-
-        public List<string> Permissions
-        {
-            get { return new List<string>() { "RocketReport.report" }; }
-        }
+        public List<string> Permissions => new List<string>() { "RocketReport.report" };
 
 		public void Execute(IRocketPlayer caller, params string[] command)
 		{
