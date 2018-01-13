@@ -93,46 +93,6 @@ namespace RG.PlayerReport
             }
         }
 
-		public void MySqlDelReport(IRocketPlayer caller, string ID)
-		{
-			try
-			{
-				MySqlConnection SQLconnection = CreateConnection();
-				MySqlCommand SQLcommand = SQLconnection.CreateCommand();
-				SQLcommand.CommandText = string.Concat("delete from `" + TableName + "` where id = `" + ID + "`" );
-				SQLconnection.Open();
-				int OK = SQLcommand.ExecuteNonQuery();
-				SQLconnection.Close();
-				if (OK > 0)
-				{
-					if (caller is ConsolePlayer)
-					{
-						Logger.Log(PlayerReport.Instance.Translate("command_del_successful"));
-					}
-					else
-					{
-						UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_del_successful"));
-					}
-				}
-				else
-				{
-					if (caller is ConsolePlayer)
-					{
-						Logger.Log(PlayerReport.Instance.Translate("command_report_not_found"));
-					}
-					else
-					{
-						UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_report_not_found"));
-					}
-				}
-			}
-			catch (Exception ex)
-			{
-				Logger.LogException(ex, null);
-				UnturnedChat.Say(caller, PlayerReport.Instance.Translate("command_erro_saving"));
-			}
-		}
-
 		public ushort MySqlNotif()
 		{
             ushort CountVal = 0;
@@ -140,14 +100,14 @@ namespace RG.PlayerReport
 			{
 				MySqlConnection SQLconnection = CreateConnection();
 				MySqlCommand SQLcommand = SQLconnection.CreateCommand();
-				SQLcommand.CommandText = string.Concat("SELECT COUNT(*) AS `HowMany` FROM `" + TableName + "` WHERE `Notified` = '0' GROUP BY `Notified`;");
+				SQLcommand.CommandText = string.Concat("SELECT COUNT(*) AS `HowMany` FROM `" + TableName + "` WHERE `Notified` = 'false' GROUP BY `Notified`;");
 				SQLconnection.Open();
 				object Ok = SQLcommand.ExecuteScalar();
-				if (Ok != null)
+                SQLconnection.Close();
+                if (Ok != null)
 				{
-                    CountVal = Convert.ToUInt16(Ok);
+                    return CountVal;
 				}
-				SQLconnection.Close();
 
                 return CountVal;
 			}
@@ -155,7 +115,7 @@ namespace RG.PlayerReport
 			{
 				Logger.LogException(ex);
                 return CountVal;
-			}
+            }
 		}
 
 		public void MySqlNotified()
@@ -164,7 +124,7 @@ namespace RG.PlayerReport
 			{
 				MySqlConnection SQLconnection = CreateConnection();
 				MySqlCommand SQLcommand = SQLconnection.CreateCommand();
-				SQLcommand.CommandText = string.Concat("update `" + TableName + "` set `Notified` = '1' where `Notified` = '0'");
+				SQLcommand.CommandText = string.Concat("update `" + TableName + "` set `Notified` = 'true' where `Notified` = 'false'");
 				SQLconnection.Open();
 				SQLcommand.ExecuteNonQuery();
 				SQLconnection.Close();
